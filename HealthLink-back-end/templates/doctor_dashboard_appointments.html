@@ -1,0 +1,40 @@
+{% extends "doctor_dashboard_layout.html" %}
+{% block content %}
+    <section>
+        <h2>Appointments Today</h2>
+      <!-- <ul>
+          {% for a in aptmts %}
+              <li>
+                AppointmentID: {{ a.aID }}<br>
+                PatientID: {{ a.pID }}<br>
+                PatientName: {{ a.pname }} <br>
+                Date: {{ a.date }} <br>
+                Status: {{ a.status }} <br>
+              </li>
+          {% endfor %}
+      </ul> -->
+
+      <div id="appointment-list">
+          {% for appointment in aptmts %}
+          <div class="appointment-card">
+              <div class="dots-and-status">
+                  <div class="dots-container">
+                      <div class="dot {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'visited' %}grey{% elif appointment.status == 'missed' %}red{% endif %}"></div>
+                      <div class="dot {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'visited' %}grey{% elif appointment.status == 'missed' %}red{% endif %}"></div>
+                      <div class="dot {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'visited' %}grey{% elif appointment.status == 'missed' %}red{% endif %}"></div>
+                  </div>
+                  <div class="status {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'visited' %}grey{% elif appointment.status == 'missed' %}red{% endif %}">{{ appointment.status|capitalize }}</div>
+              </div>
+              <div class="appointment-details">
+                  <h2>Appointment ID: {{ appointment.pId }}</h2>
+                  <p>Date: {{ appointment.date }}</p>
+                  <p>Time: {{ appointment.time }}</p>
+                  <p>Patient: {{ appointment.pName }}</p>
+              </div>
+              <button class="diagnose-btn" onclick="openDiagnosisPage('{{ appointment.appointmentId }}')">Diagnose</button>
+          </div>
+          {% endfor %}
+      </div>
+
+    </section>
+{% endblock content %}

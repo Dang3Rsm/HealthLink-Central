@@ -1,0 +1,20 @@
+
+<title>List of Hospitals</title>
+{% extends "indexLayout.html" %}
+{% block content %}
+    <h1 style="display: flex; justify-content: center;">List of Hospitals</h1>
+    
+<div class="big_container">
+{% for hospital in hospitals %}
+<div class="hospital_card1"><div class="hos_name"><h2>{{ hospital.name }}</h2></div><span>{{ hospital.address }}
+  </span><span>Departments</span>
+  <div class="services_container">
+  {% for a in hospital.departments %}
+<span class="container">{{ a }}</span>
+  {% endfor %}
+  </div>
+  
+  <span>Number of beds: {{ hospital.numberOfBeds}}</span><span>Medical Staff: {{ hospital.medicalStaff }}</span><span>Non-Medical Staff: {{ hospital.nonMedicalStaff }}</span></div>
+{% endfor %}
+</div>
+{% endblock content %}

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Patient Dashboard</title>
+    <link rel="stylesheet" href="/static/styles/patientdash.css" />
+  </head>
+
+  <body>
+    <nav class="navbar">
+      <div class="container">
+        
+        <a href="/patient_dashboard/new_appointment" class="nav-link">New Appointment</a>
+        <a href="/patient_dashboard/reports" class="nav-link">Bills</a>
+        <a href="/patient_dashboard/prescriptions" class="nav-link">Prescription</a>
+        <a href="/logout" class="nav-link">Logout</a>
+
+      </div>
+    </nav>
+
+
+  <!-- <header>
+    <h1>Welcome, Dr. Joe</h1>
+  </header>
+  <nav>
+    <a href="/patient_dashboard">Dashboard</a>
+    <a href="/patient_dashboard/appointments">New Appointment</a>
+    <a href="/patient_dashboard/patients">Patients</a>
+    <a href="/patient_dashboard/reports">Reports & Bills</a>
+    <a href="/patient_dashboard/prescriptions">Prescriptions</a>
+    <a href="/patient_dashboard/logout">Logout</a>
+  </nav> -->
+
+  
+    {% block content %}{% endblock %}
+</body>
+</html>

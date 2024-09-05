@@ -1,0 +1,189 @@
+<html>
+  <head>
+  <title>Register - HealthLink Central</title>
+    <link rel="stylesheet" href="static/styles/login.css">
+  </head>
+<body>
+  <div>
+    <div class="home-container">
+      <div class="home-header">
+        <header data-thq="thq-navbar" class="navbarContainer home-navbar-interactive">
+          <span class="logo">HealthLink Central</span>
+
+          <div data-thq="thq-navbar-nav" class="home-desktop-menu">
+            <nav class="home-links">
+                <span class="home-nav12 bodySmall"><a href="/" >Home</a></span>     
+                <span class="home-nav22 bodySmall"><a href="/hospitals" >Hospitals</a></span>
+            </nav>
+            <div class="home-buttons">
+                <div class="dropdown">
+                <button class="dropbtn buttonFlat">Login</button>
+                <div class="dropdown-content">
+                  <a href="/patient_login">Patient Login</a>
+                  <a href="/doctor_login">Doctor Login</a>
+                  <a href="/hospital_login">Hospital Login</a>
+                </div>
+                <a href="/register" style="width:100%;"></div><button class="buttonFilled">
+                Register</button></a>
+            </div>
+          </div>
+          <div data-thq="thq-burger-menu" class="home-burger-menu">
+            <svg viewBox="0 0 1024 1024" class="home-icon socialIcons">
+              <path
+                d="M128 554.667h768c23.552 0 42.667-19.115 42.667-42.667s-19.115-42.667-42.667-42.667h-768c-23.552 0-42.667 19.115-42.667 42.667s19.115 42.667 42.667 42.667zM128 298.667h768c23.552 0 42.667-19.115 42.667-42.667s-19.115-42.667-42.667-42.667h-768c-23.552 0-42.667 19.115-42.667 42.667s19.115 42.667 42.667 42.667zM128 810.667h768c23.552 0 42.667-19.115 42.667-42.667s-19.115-42.667-42.667-42.667h-768c-23.552 0-42.667 19.115-42.667 42.667s19.115 42.667 42.667 42.667z">
+              </path>
+            </svg>
+          </div>
+          <div data-thq="thq-mobile-menu" class="home-mobile-menu1 mobileMenu">
+            <div class="home-nav">
+              <div class="home-top">
+                <span class="logo">HealthLink Central</span>
+                <div data-thq="thq-close-menu" class="home-close-menu">
+                  <svg viewBox="0 0 1024 1024" class="home-icon02 socialIcons">
+                    <path
+                      d="M810 274l-238 238 238 238-60 60-238-238-238 238-60-60 238-238-238-238 60-60 238 238 238-238z">
+                    </path>
+                  </svg>
+                </div>
+              </div>
+              <nav class="home-links1">
+                <span class="home-nav12 bodySmall"><a href="/" >Home</a></span>     
+                <span class="home-nav22 bodySmall"><a href="/hospitals" >Hospitals</a></span>
+
+              </nav>
+              <div class="home-buttons1">
+                <div class="dropdown">
+                <button class="dropbtn buttonFlat">Login</button>
+                <div class="dropdown-content">
+                  <a href="/patient_login">Patient Login</a>
+                  <a href="/doctor_login">Doctor Login</a>
+                  <a href="/hospital_login">Hospital Login</a>
+                </div>
+                  <a href="/register" style="width:100%;"><button class="buttonFilled">
+                Register</button></a>
+              </div>
+            </div>
+
+          </div>
+        </header>
+      </div>
+    </div>
+  </div>
+  
+      <hr>
+{% block content %}{% endblock %}
+</body>
+  
+  <script>
+    function validateForm() {
+      var password = document.getElementById("password").value;
+      var confirmPassword = document.getElementById("confirmPassword").value;
+
+      if (password !== confirmPassword) {
+        alert("Passwords do not match!");
+        return false;
+      }
+      return true;
+    }
+  </script>
+  <script>
+    let currentStep = 0,
+    steps = document.querySelectorAll(".step"),
+    progressBar = document.getElementById("progressBar"),
+    servicesProvided = [];
+
+      function nextStep() {
+          if (validateStep(currentStep)) {
+              if (currentStep < steps.length - 1) {
+                  steps[currentStep].classList.remove('active');
+                  currentStep++;
+                  steps[currentStep].classList.add('active');
+                  updateProgressBar();
+                  updateReview();
+              }
+          }
+      }
+
+      function prevStep() {
+          if (currentStep > 0) {
+              steps[currentStep].classList.remove('active');
+              currentStep--;
+              steps[currentStep].classList.add('active');
+              updateProgressBar();
+              updateReview();
+          }
+      }
+
+      function updateProgressBar() {
+          const percent = (currentStep / (steps.length - 1)) * 100;
+          progressBar.style.width = percent + '%';
+      }
+
+      function updateReview() {
+          document.getElementById('reviewFullName').innerText = document.getElementById('fullName').value;
+          document.getElementById('reviewDob').innerText = document.getElementById('dob').value;
+        var bloodGroupSelect = document.getElementById('bloodGroup');
+        var selectedBloodGroup = bloodGroupSelect.options[bloodGroupSelect.selectedIndex].text;
+        document.getElementById('reviewBloodGroup').innerText = selectedBloodGroup; 
+          document.getElementById('reviewEmail').innerText = document.getElementById('email').value;
+          document.getElementById('reviewPhone').innerText = document.getElementById('phone').value;
+          document.getElementById('reviewAddress').innerText = document.getElementById('address').value;
+      }
+
+      function validateStep(stepIndex) {
+          let isValid = true;
+          const inputs = steps[stepIndex].querySelectorAll('input, textarea');
+          inputs.forEach(input => {
+              if (!input.checkValidity()) {
+                  isValid = false;
+                  const errorId = input.id + 'Error';
+                  document.getElementById(errorId).textContent = input.validationMessage;
+              } else {
+                  const errorId = input.id + 'Error';
+                  document.getElementById(errorId).textContent = '';
+              }
+          });
+          return isValid;
+      }
+  </script>
+    <script>
+      function submitForm() {
+          const form = document.getElementById('patientForm');
+          const formData = new URLSearchParams(new FormData(form)).toString();
+
+          fetch('https://c2ffd392-c4e1-4bad-bae8-cd98e5af9b20-00-2czhleersu7a5.spock.replit.dev/patient_register', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded'
+              },
+              body: formData
+          })
+          .then(response => {
+              if (response.ok) {
+                  alert('Form submitted successfully!');
+                  // Reset form after successful submission
+                  form.reset();
+                  // Reset progress bar
+                  progressBar.style.width = '0';
+                  // Reset review details
+                  document.getElementById('reviewFullName').innerText = '';
+                  document.getElementById('reviewDob').innerText = '';
+                  document.getElementById('reviewBloodGroup').innerText = '';
+                  document.getElementById('reviewEmail').innerText = '';
+                  document.getElementById('reviewPhone').innerText = '';
+                  document.getElementById('reviewAddress').innerText = '';
+              } else {
+                  throw new Error('Form submission failed');
+              }
+          })
+          .catch(error => {
+              console.error('Error:', error);
+              alert('Form submission failed. Please try again later.');
+          });
+      }
+
+      // Add event listener to form submission
+      const submitButton = document.querySelector('#RegisterForm button[type="submit"]');
+      submitButton.addEventListener('click', submitForm);
+    </script>
+</html>

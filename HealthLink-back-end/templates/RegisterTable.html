@@ -1,0 +1,66 @@
+{% extends "indexLayout.html" %}
+{% block content %}
+<!-- <h1>Register as</h1>
+<a href='/patient_register'> Patient </a> <br>
+<a href='/doctor_register'> Doctor </a> <br>
+<a href='/hospital_register'> Hospital </a> <br>
+ -->
+
+<div id="choose-plan" class="home-pricing">
+  <div class="customer_choser">
+    <div class="home-container05">
+      <span class="overline">           
+        <span>Create account now</span><br /></span>
+      <h2 class="heading2">Choose Your Account type</h2>
+      <span class="home-pricing-sub-heading bodyLarge"><span><span>Select the account type that best fits your healthcare
+            management
+            needs</span></span></span>
+    </div>
+    <div class="home-container06">
+      <div class="home-pricing-card patient_card">
+        <div class="home-container15">
+          <span class="home-text52"><span></span></span><span
+            class="home-pro-plan-pricing">Patient</span>
+        </div><a style="width: 100%;" href="/patient_register"><button class="home-button buttonOutline">
+        <span><span>Continue</span><br/></span>
+        </button></a>
+        <div class="home-container07">
+          
+          <span class="home-text36"><span>Create a patient account</span><br /></span><span class="bodySmall">                  Access to the personal healthcare management system</span>
+        </div>
+        
+        
+      </div>
+      <div class="home-pricing-card hospital_card">
+        <div class="home-container15">
+          <span class="home-text52"><span></span></span><span
+            class="home-pro-plan-pricing">Hospital</span>
+        </div>
+
+        <a style="width: 100%;" href="/hospital_register"><button class="home-button buttonOutline">
+        <span><span>Continue</span><br/></span>
+        </button></a>
+        <div class="home-container07">
+          <span class="home-text36"><span >Create a hospital account</span><br /></span><span class="bodySmall">Advanced tools for comprehensive healthcare management system for hospitals</span>
+        </div>
+        
+      </div>
+      <div class="home-pricing-card patient_card">
+        <div class="home-container15">
+          <span class="home-text52"><span></span></span><span
+            class="home-pro-plan-pricing">Doctor</span>
+        </div>
+        <a style="width: 100%;" href="/doctor_register"><button class="home-button buttonOutline">
+        <span><span>Continue</span><br/></span>
+        </button></a>
+        <div class="home-container07">
+
+          <span class="home-text36"><span>Create a doctor account</span><br /></span><span class="bodySmall">                  Efficiently treat patients with better knowledge</span>
+        </div>
+
+       
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

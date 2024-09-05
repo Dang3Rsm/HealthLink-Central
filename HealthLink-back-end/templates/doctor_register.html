@@ -1,0 +1,65 @@
+{% extends "registerLayout.html" %}
+{% block content %}
+<link rel="stylesheet" href="/static/styles/registeration.css">
+
+
+<div class="form">   
+  <form id="doctorRegisterForm" onsubmit="return validateForm()" action='/doctor_register' method='POST'>
+   
+    <h1 style="display:flex;justify-content: center;">Doctor Registration</h1>
+
+    <div class="small_container">
+    <label for="fullName">Name:</label><br>
+    <input type="text" id="fullName" name="fullName" required><br><br>
+    </div><br><br>
+
+    <div class="small_container">
+    <label for="registrationNumber">Registration Number:</label><br>
+    <input type="text" id="registrationNumber" name="registrationNumber" required><br><br>
+    </div><br><br>
+
+    <div class="small_container">
+    <label for="email">E-mail:</label><br>
+    <input type="email" id="email" name="email" required><br><br>
+    </div><br><br>
+    
+    <div class="small_container">  
+    <label for="hospital">Hospital:</label><br>
+    <select id="hospital" name="hospital" required>
+      <option value="">Select</option>
+      {% for hospital in hospitals %}
+      <option value="{{ hospital.name }}">{{ hospital.name }}</option>
+      {% endfor %}
+    </select>
+    </div><br><br>
+
+
+    <div class="small_container">
+    <label for="department">Department:</label><br>
+    <select id="department" name="department" required>
+      <option value="">Select</option>
+      {% for hospital in hospitals %}
+        {% for department in hospital.departments %}
+          <option value="{{ department }}">{{ department }}</option>
+        {% endfor %}
+      {% endfor %}
+    </select><br><br>
+    </div><br><br>
+    
+    <div class="small_container">
+    <label for="password">Password:</label><br>
+    <input type="password" id="password" name="password" required><br><br>
+    </div><br><br>
+
+    <div class="small_container">
+    <label for="confirmPassword">Confirm Password:</label><br>
+    <input type="password" id="confirmPassword" name="confirmPassword" required><br><br>
+    </div><br><br>
+
+    
+    <div class="submitButton">
+      <input class="submit-btn" type="submit" value="Register">
+    </div>
+  </form>
+</div>
+{% endblock content %}

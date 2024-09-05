@@ -1,0 +1,50 @@
+{% extends "patient_dashboard_layout.html" %}
+<title>{{patient[1]}} New Appointment</title>
+
+
+{% block content %}
+
+<link rel="stylesheet" href="/static/styles/login.css">
+
+<div class="form">
+
+  <form id="patientNewAptmtForm" onsubmit="return validateForm()" action='/new_appointment' method='POST'>
+<h1 style="display:flex;justify-content: center;">New Appointment</h1>
+
+    <div class="small_container">
+      <label for="fullName">Full Name:</label><br>
+    <input type="text" id="fullName" name="fullName" required>
+    </div>
+    <br><br>
+    <div class="small_container">
+      <label for="phone">Phone Number:</label><br>
+    <input type="tel" id="phone" name="phone" required>
+    </div>
+    <br><br>
+    <div class="small_container">
+      <label for="email">E mail:</label><br>
+    <input type="email" id="email" name="email" required>
+    </div>
+    <br><br>
+    <div class="small_container">
+      <label for="hospital">Select Hospital:</label><br>
+      <select id="hospital" name="hospital" required>
+          
+      </select>
+    </div>
+    <br><br>
+
+    <div class="small_container">
+      <label for="department">Select Department:</label><br>
+      <select id="department" name="department" required>
+       
+      </select>
+    </div>
+    <br><br>
+    <div class="submitButton">
+      <input class="submit-btn" type="submit" value="Register">
+    </div>
+  </form>
+</div>
+
+{% endblock %}

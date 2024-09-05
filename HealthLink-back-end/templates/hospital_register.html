@@ -1,0 +1,131 @@
+{% extends "registerLayout.html" %}
+{% block content %}
+<link rel="stylesheet" href="/static/styles/registeration.css">
+
+<div class="form ">
+  
+    <form id="hospitalRegisterForm" onsubmit="return validateForm()" action='/hospital_register' method='POST'>
+      <h1 style="display:flex;justify-content: center;">Hospital Registration</h1>
+      <div class="small_container">
+        <label for="fullName">Hospital Name:</label><br>
+      <input type="text" id="fullName" name="fullName" required>
+      </div>
+      <br><br>
+
+      
+      <div class="small_container">
+        <label for="address">Address:</label><br>
+        <input type="text" id="address" name="address" rows=4 column=50 required><br><br>
+      </div>
+      <br><br>
+
+      
+      <div class="small_container">
+        <label for="contactPerson">Contact Person:</label><br>
+        <input type="text" id="contactPerson" name="contactPerson" required><br><br>
+      </div>
+       <br><br>
+
+      
+      <div class="small_container">
+        <label for="numberOfBeds">Number of Beds:</label><br>
+        <input type="number" id="numberOfBeds" name="numberOfBeds" required><br><br>
+      </div>
+       <br><br>
+
+      
+      <div class="small_container">
+        <label for="medicalStaff">Medical Staff:</label><br>
+        <input type="number" id="medicalStaff" name="medicalStaff" required><br><br>
+      </div>
+       <br><br>
+
+      
+      <div class="small_container">
+        <label for="nonMedicalStaff">Non-Medical Staff:</label><br>
+        <input type="number" id="nonMedicalStaff" name="nonMedicalStaff" required><br><br>
+      </div>
+       <br><br>
+
+      
+      <div class="small_container">
+        <label for="email">Email:</label><br>
+        <input type="email" id="email" name="email" required><br><br>
+      </div>
+       <br><br>
+
+      
+      <div class="small_container">
+        <label for="password">Password:</label><br>
+        <input type="password" id="password" name="password" required><br><br>
+      </div>
+       <br><br>
+
+      
+      <div class="small_container">
+        <label for="confirmPassword">Confirm Password:</label><br>
+        <input type="password" id="confirmPassword" name="confirmPassword" required><br><br>
+      </div>
+       <br><br>
+      
+      
+      <div class="submitButton">
+        <input class="submit-btn" type="submit" value="Register">
+      </div>
+      
+    </form>
+</div>
+
+{% endblock content %}
+<script>
+  function validateForm() {
+    var password = document.getElementById("password").value;
+    var confirmPassword = document.getElementById("confirmPassword").value;
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match!");
+      return false;
+    }
+    return true;
+  }
+</script>
+  <script>
+    function submitForm() {
+        const form = document.getElementById('patientForm');
+        const formData = new URLSearchParams(new FormData(form)).toString();
+
+        fetch('https://c2ffd392-c4e1-4bad-bae8-cd98e5af9b20-00-2czhleersu7a5.spock.replit.dev/patient_register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Form submitted successfully!');
+                // Reset form after successful submission
+                form.reset();
+                // Reset progress bar
+                progressBar.style.width = '0';
+                // Reset review details
+                document.getElementById('reviewFullName').innerText = '';
+                document.getElementById('reviewDob').innerText = '';
+                document.getElementById('reviewBloodGroup').innerText = '';
+                document.getElementById('reviewEmail').innerText = '';
+                document.getElementById('reviewPhone').innerText = '';
+                document.getElementById('reviewAddress').innerText = '';
+            } else {
+                throw new Error('Form submission failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Form submission failed. Please try again later.');
+        });
+    }
+
+    // Add event listener to form submission
+    const submitButton = document.querySelector('#RegisterForm button[type="submit"]');
+    submitButton.addEventListener('click', submitForm);
+  </script>

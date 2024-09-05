@@ -1,0 +1,18 @@
+<title>Login</title>
+{% extends "login_layout.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="static/styles/login.css">
+<div class="container">
+  <h1>Hospital Login</h1>
+  <form method="POST" id="hospitalLoginForm">
+      <label for="email">Email:</label><br>
+      <input type="email" id="email" name="email" required><br><br>
+
+      <label for="password">Password:</label><br>
+      <input type="password" id="password" name="password" required><br><br>
+
+      <input type="submit" value="Login">
+  </form>
+</div>
+{% endblock %}

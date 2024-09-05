@@ -1,0 +1,44 @@
+
+
+{% extends "registerLayout.html" %}
+{% block content %}
+<link rel="stylesheet" href="/static/styles/registeration.css">
+
+<div class="form ">
+
+      <h1>Hospital Registration</h1>
+      <form id="hospitalRegisterForm" onsubmit="return validateForm()" action='/hospital_register' class="mx-auto" method='POST'>
+          <label for="name">Hospital Name:</label><br>
+          <input type="text" id="name" name="name" required><br><br>
+
+          <label for="address">Address:</label><br>
+          <input type="text" id="address" name="address" required><br><br>
+
+          <label for="contactPerson">Contact Person:</label><br>
+          <input type="text" id="contactPerson" name="contactPerson" required><br><br>
+
+          <label for="numberOfBeds">Number of Beds:</label><br>
+          <input type="number" id="numberOfBeds" name="numberOfBeds" required><br><br>
+
+          <label for="medicalStaff">Medical Staff:</label><br>
+          <input type="number" id="medicalStaff" name="medicalStaff" required><br><br>
+
+          <label for="nonMedicalStaff">Non-Medical Staff:</label><br>
+          <input type="number" id="nonMedicalStaff" name="nonMedicalStaff" required><br><br>
+
+          <label for="email">Email:</label><br>
+          <input type="email" id="email" name="email" required><br><br>
+
+          <label for="password">Password:</label><br>
+          <input type="password" id="password" name="password" required><br><br>
+
+          <label for="confirmPassword">Confirm Password:</label><br>
+          <input type="password" id="confirmPassword" name="confirmPassword" required><br><br>
+
+        <div class="submitButton">
+          <input class="submit-btn" type="submit" value="Register"></div>
+      </form>
+</div>
+
+
+{% endblock %}

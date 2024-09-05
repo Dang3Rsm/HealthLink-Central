@@ -1,0 +1,153 @@
+/* Basic styles */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background-color: white;
+  padding: 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: white;
+}
+
+/* Navigation bar styles */
+.navbar {
+  background-color: white;
+  color: black;
+  padding: 10px 0;
+  border-bottom: 1px solid #a5a5a55d;
+}
+
+.navbar .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.patient-name {
+  font-weight: bold;
+}
+
+.nav-link {
+  color: black;
+  display: flex;
+  text-decoration: none;
+  margin-left: 20px;
+  min-width: 130px;
+  justify-content: center;
+  transition-property: all;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
+  transition-delay: 0s;
+  border: 1px solid rgba(108, 108, 108, 0.394);
+  padding: 10px;
+}
+
+
+.nav-link:hover {
+  background-color: black;
+  color: white;
+  transition-property: all;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
+  transition-delay: 0s;
+}
+
+/* Patient card styles */
+.appointment-card {
+  background-color: white;
+  border-radius: 5px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.appointment-card h2 {
+  margin-bottom: 10px;
+}
+
+.appointment-card p {
+  margin-bottom: 5px;
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  font-weight: 400;
+}
+
+/* Styles for the shining dots */
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.green {
+  background-color: green;
+}
+
+.grey {
+  background-color: grey;
+}
+
+.red {
+  background-color: red;
+}
+
+/* Styles for the status section */
+.status {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: white;
+  font-weight: bold;
+}
+
+/* Additional styles for the appointment cards */
+.appointment-card {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.dots-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.appointment-details {
+  margin-left: 20px;
+}
+
+.date-time {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.dots-and-status {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Responsive layout */
+@media (max-width: 768px) {
+  .appointment-card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dots-and-status {
+    display: flex;
+    align-items: center;
+  }
+
+  .appointment-details {
+    margin-left: 0;
+  }
+}

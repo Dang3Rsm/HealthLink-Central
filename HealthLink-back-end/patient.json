@@ -1,0 +1,58 @@
+[
+  {
+    "patientId": 10001,
+    "fullName": "Alice Smith",
+    "dob": "1980-01-01",
+    "bloodGroup": "AB+",
+    "email": "alice.smith@example.com",
+    "phone": "1234567890",
+    "relativeName": "Bob Smith",
+    "relativeNumber": "9876543210",
+    "address": "123 Main St, Anytown, USA"
+    "password": "password123"
+  },
+  {
+    "patientId": 10002,
+    "fullName": "John Doe",
+    "dob": "1975-05-20",
+    "bloodGroup": "O-",
+    "email": "johndoe@example.com",
+    "phone": "9876543210",
+    "relativeName": "Jane Doe",
+    "relativeNumber": "1234567890",
+    "address": "456 Oak St, Anycity, USA"
+  },
+  {
+    "patientId": 10003,
+    "fullName": "Emily Brown",
+    "dob": "1992-09-15",
+    "bloodGroup": "A+",
+    "email": "emily.brown@example.com",
+    "phone": "5555555555",
+    "relativeName": "David Brown",
+    "relativeNumber": "5555555555",
+    "address": "789 Maple Ave, Anothercity, USA"
+  },
+  {
+    "patientId": 10004,
+    "fullName": "Michael Johnson",
+    "dob": "1988-03-30",
+    "bloodGroup": "B-",
+    "email": "michael.johnson@example.com",
+    "phone": "1112223333",
+    "relativeName": "Sarah Johnson",
+    "relativeNumber": "1112223333",
+    "address": "321 Pine Rd, Yetanothercity, USA"
+  },
+  {
+    "patientId": 10005,
+    "fullName": "Samantha Lee",
+    "dob": "1985-12-10",
+    "bloodGroup": "A-",
+    "email": "samantha.lee@example.com",
+    "phone": "9998887777",
+    "relativeName": "James Lee",
+    "relativeNumber": "7778889999",
+    "address": "555 Cedar Ln, Newcity, USA"
+  }
+]

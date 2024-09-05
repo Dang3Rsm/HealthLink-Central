@@ -1,0 +1,47 @@
+{% extends "registerLayout.html" %}
+{% block content %}
+<h1>Patient Registration</h1>
+  <form id="patientRegisterForm" onsubmit="return validateForm()" action='/patient_register' method='POST'>
+    <label for="fullName">Full Name:</label><br>
+    <input type="text" id="fullName" name="fullName" required><br><br>
+
+    <label for="dob">Date of Birth:</label><br>
+    <input type="date" id="dob" name="dob" required><br><br>
+
+    <label for="bloodGroup">Blood Group:</label><br>
+    <select id="bloodGroup" name="bloodGroup" required>
+      <option value="">Select</option>
+      <option value="A+">A+</option>
+      <option value="A-">A-</option>
+      <option value="B+">B+</option>
+      <option value="B-">B-</option>
+      <option value="AB+">AB+</option>
+      <option value="AB-">AB-</option>
+      <option value="O+">O+</option>
+      <option value="O-">O-</option>
+    </select><br><br>
+
+    <label for="email">Email:</label><br>
+    <input type="email" id="email" name="email" required><br><br>
+
+    <label for="phone">Phone:</label><br>
+    <input type="tel" id="phone" name="phone" pattern="[0-9]{10}" required><br><br>
+
+    <label for="relativeName">Relative's Name:</label><br>
+    <input type="text" id="relativeName" name="relativeName" required><br><br>
+
+    <label for="relativeNumber">Relative's Phone:</label><br>
+    <input type="tel" id="relativeNumber" name="relativeNumber" pattern="[0-9]{10}" required><br><br>
+
+    <label for="address">Address:</label><br>
+    <textarea id="address" name="address" rows="4" cols="50" required></textarea><br><br>
+
+    <label for="password">Password:</label><br>
+    <input type="password" id="password" name="password" required><br><br>
+
+    <label for="confirmPassword">Confirm Password:</label><br>
+    <input type="password" id="confirmPassword" name="confirmPassword" required><br><br>
+
+    <input type="submit" value="Register">
+  </form>
+{% endblock content %}
