@@ -1,12 +1,14 @@
-from flask import Flask, request, jsonify, render_template
-from flask import redirect, url_for, session
+from flask import Flask, request, jsonify, render_template, session
+from flask import redirect, url_for
 import json
 import bcrypt
-import sqlite3
+from dotenv import load_dotenv
+import os
+import pymysql
 
 app = Flask(__name__)
 app.secret_key = 'mysecretpassword'
-
+load_dotenv()
 ####################################### Functions
 ##### Password Hashing
 def generate_hash_password(password):
@@ -23,20 +25,32 @@ def check_password(password, hashed_password):
 ##### Database Connection
 def db_connection():
   conn = None
+  timeout = 10
   try:
-    conn = sqlite3.connect("HealthLinkDB.sqlite")
-  except sqlite3.Error as e:
-    print(e)
+    conn = pymysql.connect(
+    charset=os.getenv('DB_CHARSET'),
+    connect_timeout=timeout,
+    cursorclass=pymysql.cursors.DictCursor,
+    db=os.getenv('DB_NAME'),
+    host=os.getenv('DB_HOST'),
+    password=os.getenv('DB_PASSWORD'),
+    read_timeout=timeout,
+    port=int(os.getenv('DB_PORT')),
+    user=os.getenv('DB_USER'),
+    write_timeout=timeout,
+  )
+  except pymysql.Error as e:
+    print("Error connecting to MySQL:", e)
   return conn
 
 ##### appointment data extraction
 def get_appointment_data(id):
   conn = db_connection()
   cursor = conn.cursor()
-  cursor.execute("SELECT * FROM patients_master_table WHERE patientId = ?", (id, ))
+  cursor.execute("SELECT * FROM patients_master_table WHERE patientId = %s", (id, ))
   patient = cursor.fetchone()
-  pname = patient[1]
-  cursor.execute("SELECT * FROM appointments_table WHERE patientId = ?", (id, ))
+  pname = patient['fullName']
+  cursor.execute("SELECT * FROM appointments_table WHERE patientId = %s", (id, ))
   appointments = cursor.fetchall()
   appointment_list = []
   for appointment in appointments:
@@ -112,11 +126,11 @@ def patient_register():
     hashed_password = generate_hash_password(password)
     conn = db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM patients_master_table WHERE email=? OR phone=?",(email, phone))
+    cursor.execute("SELECT * FROM patients_master_table WHERE email=%s OR phone=%s", (email, phone))
     existing_patient = cursor.fetchone()
     if existing_patient:
       return render_template('error.html', message="Patient already exists")
-    cursor.execute("""INSERT INTO patients_master_table (fullName, dob, bloodGroup, email, phone,relativeName, relativeNumber, address, passwordHash) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",(fullName, dob, bloodGroup, email, phone, relativeName, relativeNumber,address, hashed_password))
+    cursor.execute("""INSERT INTO patients_master_table (fullName, dob, bloodGroup, email, phone,relativeName, relativeNumber, address, passwordHash) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",(fullName, dob, bloodGroup, email, phone, relativeName, relativeNumber,address, hashed_password))
     conn.commit()
     conn.close()
     return redirect('/patient_login')
@@ -137,11 +151,11 @@ def doctor_register():
     hashed_password = generate_hash_password(docPass)
     conn = db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM doctors_master_table WHERE email=? OR regNo=?",(docEmail, docNo))
+    cursor.execute("SELECT * FROM doctors_master_table WHERE email=%s OR regNo=%s",(docEmail, docNo))
     existing_doctor = cursor.fetchone()
     if existing_doctor:
       return render_template('error.html',message="Doctor already exists")
-    cursor.execute("""INSERT INTO doctors_master_table (fullName,regNo,email,hospital,department,passwordHash) VALUES (?, ?, ?, ?, ?, ?)""",(docName, docNo, docEmail, docHospital, docDept, hashed_password))
+    cursor.execute("""INSERT INTO doctors_master_table (fullName,regNo,email,hospital,department,passwordHash) VALUES (%s, %s, %s, %s, %s, %s)""",(docName, docNo, docEmail, docHospital, docDept, hashed_password))
     conn.commit()
     conn.close()
     return redirect('/doctor_login')
@@ -152,7 +166,7 @@ def doctor_register():
     hospitals = cursor.fetchall()
     hospital_list = []
     for hospital in hospitals:
-      hospital_data = {"name": hospital[0]}
+      hospital_data = {"name": hospital['name']}
       attributes = hospital[1]
       if attributes is not None:
         attributes_dict = json.loads(attributes)
@@ -177,11 +191,11 @@ def hosital_register():
     hashed_password = generate_hash_password(hosPass)
     conn = db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM hospitals_master_table WHERE email=? OR name=?",(hosEmail, hosName))
+    cursor.execute("SELECT * FROM hospitals_master_table WHERE email=%s OR name=%s",(hosEmail, hosName))
     existing_hospital = cursor.fetchone()
     if existing_hospital:
       return render_template('error.html',message="Hospital already exists")
-    cursor.execute('''INSERT INTO hospitals_master_table (name, address, contactPerson, numberOfBeds, medicalStaff,nonMedicalStaff,email, passwordHash) values(?,?,?,?,?,?,?,?)''',(hosName, hosAddress, hosContactPerson, hosNumberOfBeds,hosMedicalStaff, hosNonMedicalStaff, hosEmail, hashed_password))
+    cursor.execute('''INSERT INTO hospitals_master_table (name, address, contactPerson, numberOfBeds, medicalStaff,nonMedicalStaff,email, passwordHash) values(%s,%s,%s,%s,%s,%s,%s,%s)''',(hosName, hosAddress, hosContactPerson, hosNumberOfBeds,hosMedicalStaff, hosNonMedicalStaff, hosEmail, hashed_password))
     conn.commit()
     conn.close()
     return redirect('/hospital_login')
@@ -196,13 +210,13 @@ def patient_login():
     password = data["password"]
     conn = db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM patients_master_table WHERE phone=?",(phoneno, ))
+    cursor.execute("SELECT * FROM patients_master_table WHERE phone=%s",(phoneno, ))
     patient = cursor.fetchone()
     if not patient:
       return render_template('error.html', message='No such user found')
-    if check_password(password, patient[9]):
+    if check_password(password, patient['passwordHash']):
       session['user_type'] = 'patient'
-      session['patient_id'] = patient[0]
+      session['patient_id'] = patient['patientId']
       return redirect('/patient_dashboard')
     else:
       return render_template('error.html', message="Invalid credentials")
@@ -217,7 +231,7 @@ def doctor_login():
     password = data["password"]
     conn = db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM doctors_master_table WHERE regNo=?",(regNo, ))
+    cursor.execute("SELECT * FROM doctors_master_table WHERE regNo=%s",(regNo, ))
     existing_doctor = cursor.fetchone()
     if not existing_doctor:
       return render_template('error.html', message='No such user found')
@@ -238,7 +252,7 @@ def hospital_login():
     password = data["passwor"]
     conn = db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM hospitals_master_table WHERE email=?",(email, ))
+    cursor.execute("SELECT * FROM hospitals_master_table WHERE email=%s",(email, ))
     existing_hospital = cursor.fetchone()
     if not existing_hospital:
       return render_template('error.html', message='No such user found')
@@ -258,9 +272,9 @@ def doctor_dashboard():
     doctorId = session.get('doctor_id')
     conn = db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM doctors_master_table WHERE doctorId = ?",(doctorId, ))
+    cursor.execute("SELECT * FROM doctors_master_table WHERE doctorId = %s",(doctorId, ))
     doctor = cursor.fetchone()
-    doctor_name = doctor[1]
+    doctor_name = doctor['fullName']
     return render_template('doctor_dashboard.html', doctorName=doctor_name)
   else:
     return redirect(url_for('doctor_login'))
@@ -281,7 +295,7 @@ def doctor_dashboard_appointments():
           "time": row[3],
           "status": row[7],
       }
-      cursor.execute("SELECT * FROM patients_master_table WHERE patientId = ?",(row[1], ))
+      cursor.execute("SELECT * FROM patients_master_table WHERE patientId = %s",(row[1], ))
       patient = cursor.fetchone()
       a['pName'] = patient[1]
       aptmts_list.append(a)
@@ -323,7 +337,11 @@ def patient_dashboard():
   if session.get('user_type') == 'patient':
     patientId = session.get('patient_id')
     appointments = get_appointment_data(patientId)
-    return render_template('patient_dashboard_appointments.html',patientData=appointments)
+    conn = db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT fullName, dob, email, bloodGroup, address FROM patients_master_table WHERE patientId = %s", (patientId, ))
+    patientData = cursor.fetchone()
+    return render_template('patient_dashboard.html',patientData=patientData, appointments=appointments)
   else:
     return redirect(url_for('patient_login'))
 
@@ -338,7 +356,7 @@ def patient_dashboard_new_appointment():
     if request.method == "GET":
       conn = db_connection()
       cursor = conn.cursor()
-      cursor.execute("SELECT * FROM patients_master_table WHERE patientId=?",(patientId,))
+      cursor.execute("SELECT * FROM patients_master_table WHERE patientId=%s",(patientId,))
       patient = cursor.fetchall()
     return render_template('patient_new_appointment.html',patient=patient)
   else:
@@ -359,7 +377,7 @@ def patient_dashboard_reports():
     patientId = session.get('patient_id')
     conn = db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM patients_diagnosis_table WHERE patientID=?",(patientId, ))
+    cursor.execute("SELECT * FROM patients_diagnosis_table WHERE patientID=%s",(patientId, ))
     diagnose = cursor.fetchall()
     return render_template('patient_dashboard_reports.html',diagnose=diagnose)
   else:
@@ -373,7 +391,7 @@ def patient_dashboard_prescriptions():
     if patientId:
       conn = db_connection()
       cursor = conn.cursor()
-      cursor.execute("SELECT * FROM patients_diagnosis_table WHERE patientID=?",(patientId, ))
+      cursor.execute("SELECT * FROM patients_diagnosis_table WHERE patientID=%s",(patientId, ))
       diagnose = cursor.fetchall()
       print(diagnose)
       return render_template('patient_dashboard_prescriptions.html',diagnose=diagnose)
@@ -388,9 +406,9 @@ def hospital_dashboard():
     hospitalId = session.get('hospital_id')
     conn = db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM hospitals_master_table WHERE hospitalId = ?",(hospitalId, ))
+    cursor.execute("SELECT * FROM hospitals_master_table WHERE hospitalId = %s",(hospitalId, ))
     hospital = cursor.fetchone()
-    hospital_name = hospital[1]
+    hospital_name = hospital['name']
     return render_template('hospital_dashboard.html',hospitalName=hospital_name)
   return redirect(url_for('hospital_login'))
 
