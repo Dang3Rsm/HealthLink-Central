@@ -1,5 +1,19 @@
-import sqlite3
-conn = sqlite3.connect("HealthLinkDB.sqlite")
+import pymysql
+from datetime import datetime
+timeout = 10
+conn = pymysql.connect(
+    charset=os.getenv('DB_CHARSET'),
+    connect_timeout=timeout,
+    cursorclass=pymysql.cursors.DictCursor,
+    db=os.getenv('DB_NAME'),
+    host=os.getenv('DB_HOST'),
+    password=os.getenv('DB_PASSWORD'),
+    read_timeout=timeout,
+    port=int(os.getenv('DB_PORT')),
+    user=os.getenv('DB_USER'),
+    write_timeout=timeout,
+)
+  
 cur = conn.cursor()
 
 #### patients_master_table ####
@@ -19,7 +33,7 @@ sample_data = [
 ]
 sql_insert_query = '''
 INSERT INTO patients_master_table (fullName, dob, bloodGroup, email, phone, relativeName, relativeNumber, address, passwordHash, attributes) 
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 '''
 for data in sample_data:
   cur.execute(sql_insert_query, data)
@@ -34,7 +48,7 @@ VALUES
 '''
 cur.execute(sql_query)
 
-#### hospitals_master_table ####
+# #### hospitals_master_table ####
 sql_query = '''
 INSERT INTO hospitals_master_table (hospitalId, name, address, contactPerson, numberOfBeds, medicalStaff, nonMedicalStaff, email, passwordHash, attributes) 
 VALUES (
@@ -54,14 +68,20 @@ cur.execute(sql_query)
 
 #### appointments_table ####
 sample_data = [
-  (1, '2024-04-15', '10:00 AM', 'Akhilesh das gupta hospital', 'Cardiology', 'Smith', 'upcoming'),
-  (2, '2024-04-18', '02:30 PM', 'Sample Hospital', 'Orthopedics', 'Johnson', 'visited'),
-  (3, '2024-04-20', '11:15 AM', 'City Medical Center', 'Dermatology', 'Patel', 'upcoming'),
-  (4, '2024-04-22', '09:45 AM', 'Healthcare Clinic', 'Pediatrics', 'Williams', 'missed')
+  (1, 1, '2024-04-15', '10:00 AM', 'Akhilesh das gupta hospital', 'Cardiology', 'Smith', 'upcoming'),
+  (2, 2, '2024-04-18', '02:30 PM', 'Sample Hospital', 'Orthopedics', 'Johnson', 'visited'),
+  (3, 3, '2024-04-20', '11:15 AM', 'City Medical Center', 'Dermatology', 'Patel', 'upcoming'),
+  (4, 4, '2024-04-22', '09:45 AM', 'Healthcare Clinic', 'Pediatrics', 'Williams', 'missed')
 ]
+
+for i in range(len(sample_data)):
+    date_str, time_str = sample_data[i][1], sample_data[i][2]
+    time_24hr = datetime.strptime(time_str, '%I:%M %p').strftime('%H:%M')
+    sample_data[i] = (sample_data[i][0], date_str, time_24hr, sample_data[i][3], sample_data[i][4], sample_data[i][5], sample_data[i][6])
+
 sql_insert_query = '''
 INSERT INTO appointments_table (patientId, date, time, hospitalName, department, doctorName, status) 
-VALUES (?, ?, ?, ?, ?, ?, ?)
+VALUES (%s, %s, %s, %s, %s, %s, %s)
 '''
 for data in sample_data:
   cur.execute(sql_insert_query, data)

@@ -1,11 +1,43 @@
 {% extends "patient_dashboard_layout.html" %}
 {% block content %}
-<h1>Prescription Dashboard</h1>
+<h1>{{ patientData.fullName }}'s Dashboard</h1>
 <div class="container">
     <!-- Prescription Details -->
     <div class="prescription-details">
-        <h2>Prescription Details</h2>
+        <h2>Your Basic Information</h2>
         
+        <ul class="patient_data_list">
+            <li>Name: {{ patientData.fullName }}</li>
+            <li>Date of Birth: {{ patientData.dob }}</li>
+            <li>Address: {{ patientData.address }}</li>
+            <li>Email: {{ patientData.email }}</li>
+            <li>Phone Number: {{ patientData.phone }}</li>
+        </ul>
     </div>
+</div>
+
+<div id="appointment-list">
+    {% for appointment in appointments.appointments %}
+        <div class="appointment-card">
+            <div class="dots-and-status">
+                <div class="dots-container">
+                    <div class="dot {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'visited' %}grey{% elif appointment.status == 'missed' %}red{% endif %}"></div>
+                    <div class="dot {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'visited' %}grey{% elif appointment.status == 'missed' %}red{% endif %}"></div>
+                    <div class="dot {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'visited' %}grey{% elif appointment.status == 'missed' %}red{% endif %}"></div>
+                </div>
+                <div class="status {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'visited' %}grey{% elif appointment.status == 'missed' %}red{% endif %}">{{ appointment.status|capitalize }}</div>
+            </div>
+            <div class="appointment-details">
+                <h2>Appointment ID: {{ appointment.appointmentId }}</h2>
+                <div class="date-time">
+                    <p>Date: {{ appointment.date }}</p>
+                    <p>Time: {{ appointment.time }}</p>
+                </div>
+                <p>Hospital: {{ appointment.hospitalName }}</p>
+                <p>Department: {{ appointment.department }}</p>
+                <p>Doctor: Dr.{{ appointment.doctorName }}</p>
+            </div>
+        </div>
+    {% endfor %}
 </div>
 {% endblock %}
