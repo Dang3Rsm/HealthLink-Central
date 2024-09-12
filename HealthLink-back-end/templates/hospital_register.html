@@ -1,14 +1,14 @@
 {% extends "registerLayout.html" %}
 {% block content %}
-<link rel="stylesheet" href="/static/styles/registeration.css">
+<link rel="stylesheet" href="/static/styles/all_forms.css">
 
 <div class="form ">
   
-    <form id="hospitalRegisterForm" onsubmit="return validateForm()" action='/hospital_register' method='POST'>
+    <form id="hospitalRegisterForm" class="formStyle" onsubmit="return validateForm()" action='/hospital_register' method='POST'>
       <h1 style="display:flex;justify-content: center;">Hospital Registration</h1>
       <div class="small_container">
-        <label for="fullName">Hospital Name:</label><br>
-      <input type="text" id="fullName" name="fullName" required>
+        <label for="name">Hospital Name:</label><br>
+      <input type="text" id="name" name="name" required>
       </div>
       <br><br>
 

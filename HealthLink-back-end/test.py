@@ -2,6 +2,10 @@
 
 import pymysql
 from datetime import datetime
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 timeout = 10
 conn = pymysql.connect(
     charset=os.getenv('DB_CHARSET'),

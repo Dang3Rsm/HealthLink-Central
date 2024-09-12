@@ -1,0 +1,102 @@
+.formGroup {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.formGroup label {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.form {
+    width: 100%;
+    min-width: 500px;
+    display: flex;
+    justify-content: center;
+}
+
+.formStyle{
+    padding: 20px;
+    width: 50%;
+    background-color: rgba(217, 217, 217, 0.134);
+    border: 1px solid rgba(140, 140, 140, 0.258);
+    border-radius: 10px;
+}
+.block-content{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+.formStyle label {
+    font-size: larger;
+}
+
+hr {
+    width: 100%;
+    border: 1px solid rgba(163, 163, 163, 0.142);
+}
+
+
+input,
+select {
+    height: 40px;
+    width: 60%;
+  border: 1px solid #c7c7c7;
+}
+
+textarea {
+    height: 80px;
+    width: 60%;
+  border: 1px solid #c7c7c7;
+
+}
+
+.small_container {
+    display: flex;
+    margin: 5px;
+    align-items: center;
+  justify-content: space-between;
+    flex-wrap: wrap;
+}
+.small_container input {
+    margin-left: auto; 
+}
+
+.bottom_buttons {
+    display: flex;
+    justify-content: space-between;
+}
+
+.error-message {
+    color: red;
+}
+
+.submitButton {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.submit-btn {
+    background-color: white;
+    font-weight: 400;
+    color: black;
+    font-size: large;
+    border: 1px solid rgb(0, 65, 0);
+    transition: ease;
+    transition-duration: 100ms;
+}
+
+.submit-btn:hover {
+    background-color: green;
+    cursor: pointer;
+    color: white;
+    transition: ease;
+    transition-duration: 100ms;
+}
+.hidden{
+    display: none;
+}

@@ -15,6 +15,7 @@ def generate_hash_password(password):
   salt = bcrypt.gensalt()
   hashed_password = bcrypt.hashpw(password.encode(), salt)
   return hashed_password.decode()
+
 def check_password(password, hashed_password):
   try:
     return bcrypt.checkpw(password.encode(), hashed_password.encode())
@@ -55,13 +56,13 @@ def get_appointment_data(id):
   appointment_list = []
   for appointment in appointments:
       appointment_data = {
-          'appointmentId': appointment[0],
-          'date': appointment[2],
-          'time': appointment[3],
-          'hospitalName': appointment[4],
-          'department': appointment[5],
-          'doctorName': appointment[6],
-          'status': appointment[7]
+          'appointmentId': appointment['appointmentId'],
+          'date': appointment['date'],
+          'time': appointment['time'],
+          'hospitalName': appointment['hospitalName'],
+          'department': appointment['department'],
+          'doctorName': appointment['doctorName'],
+          'status': appointment['status']
       }
       appointment_list.append(appointment_data)
   patient_data = {
@@ -90,16 +91,16 @@ def hospitals():
   hospitals_list = []
   for row in hospitals:
     hospital = {
-        "hospitalId": row[0],
-        "name": row[1],
-        "address": row[2],
-        "contactPerson": row[3],
-        "numberOfBeds": row[4],
-        "medicalStaff": row[5],
-        "nonMedicalStaff": row[6],
-        "email": row[7]
+      "hospitalId": row['hospitalId'],
+      "name": row['name'],
+      "address": row['address'],
+      "contactPerson": row['contactPerson'],
+      "numberOfBeds": row['numberOfBeds'],
+      "medicalStaff": row['medicalStaff'],
+      "nonMedicalStaff": row['nonMedicalStaff'],
+      "email": row['email'],
     }
-    attributes = row[9]
+    attributes = row['attributes']
     if attributes is not None:
       attributes_dict = json.loads(attributes)
       hospital['weekdays'] = attributes_dict.get('weekdays', [])
@@ -167,7 +168,8 @@ def doctor_register():
     hospital_list = []
     for hospital in hospitals:
       hospital_data = {"name": hospital['name']}
-      attributes = hospital[1]
+      attributes = hospital.get('attributes')
+
       if attributes is not None:
         attributes_dict = json.loads(attributes)
         hospital_data["departments"] = attributes_dict.get("departments", [])
@@ -235,9 +237,9 @@ def doctor_login():
     existing_doctor = cursor.fetchone()
     if not existing_doctor:
       return render_template('error.html', message='No such user found')
-    if check_password(password, existing_doctor[6]):
+    if check_password(password, existing_doctor['passwordHash']):
       session['user_type'] = 'doctor'
-      session['doctor_id'] = existing_doctor[0]
+      session['doctor_id'] = existing_doctor['doctorId']
       return redirect(url_for('doctor_dashboard'))
     else:
       return render_template('error.html', message='Invalid credentials')
@@ -249,16 +251,16 @@ def hospital_login():
   if request.method == "POST":
     data = request.form
     email = data["email"]
-    password = data["passwor"]
+    password = data["password"]
     conn = db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM hospitals_master_table WHERE email=%s",(email, ))
     existing_hospital = cursor.fetchone()
     if not existing_hospital:
       return render_template('error.html', message='No such user found')
-    if check_password(password, existing_hospital[8]):
+    if check_password(password, existing_hospital['passwordHash']):
       session['user_type'] = 'hospital'
-      session['hospital_id'] = existing_hospital[0]
+      session['hospital_id'] = existing_hospital['hospitalId']
       return redirect(url_for('hospital_dashboard'))
     else:
       return render_template('error.html', message='Invalid credentials')
@@ -339,36 +341,155 @@ def patient_dashboard():
     appointments = get_appointment_data(patientId)
     conn = db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT fullName, dob, email, bloodGroup, address FROM patients_master_table WHERE patientId = %s", (patientId, ))
+    cursor.execute("SELECT fullName, dob, email, bloodGroup, address, phone FROM patients_master_table WHERE patientId = %s", (patientId, ))
     patientData = cursor.fetchone()
     return render_template('patient_dashboard.html',patientData=patientData, appointments=appointments)
   else:
     return redirect(url_for('patient_login'))
 
-@app.route("/patient_dashboard/new_appointment",methods=["GET", "POST"])
+@app.route("/patient_dashboard/new_appointment", methods=["GET", "POST"])
 def patient_dashboard_new_appointment():
-  if session.get('user_type') == 'patient':
-    patientId = session.get('patient_id')
-    if request.method == "POST":
-      data = request.form
-      email = data["email"]
-      password = data["password"]
-    if request.method == "GET":
-      conn = db_connection()
-      cursor = conn.cursor()
-      cursor.execute("SELECT * FROM patients_master_table WHERE patientId=%s",(patientId,))
-      patient = cursor.fetchall()
-    return render_template('patient_new_appointment.html',patient=patient)
-  else:
-    return redirect(url_for('patient_login'))
+    if session.get('user_type') == 'patient':
+        patientId = session.get('patient_id')
+
+        conn = db_connection()
+        cursor = conn.cursor()
+
+        if request.method == "POST":
+            data = request.form
+            selectedRelativeId = data.get("selectRelative")  # Get selected relative's ID if any
+
+            # If the appointment is for a relative, set the relative as the patient
+            if selectedRelativeId != patientId:
+                relativeType = data.get("relativeType")
+            else:
+                appointmentPatientId = patientId  # Appointment for the logged-in patient
+
+            # Collect form data
+            Patient_name = data["fullName"]
+            dob = data["dob"]
+            bloodGroup = data["bloodGroup"]
+            email = data["email"]
+            phone = data["phone"]
+            hospitalName = data["hospital"]
+            department = data["department"]
+            visitDate = data["visitDate"]
+            addRelative = data["patientRelative"]
+
+            if addRelative:
+                # Insert into patients_relatives_table
+                cursor.execute(
+                    "INSERT INTO patients_relatives_table (patientId, relationship, fullName, dob, bloodGroup) VALUES (%s, %s, %s, %s, %s)", (patientId, relativeType, Patient_name, dob, bloodGroup)
+                )
+                conn.commit()
+                cursor.execute("SELECT relationId FROM patients_relatives_table WHERE patientId=%s AND relationship=%s", (patientId, relativeType))
+                relationId = cursor.fetchone()
+                if relationId:
+                  appointmentPatientId = relationId['relationId']  # Appointment for the relative
+                else:
+                  appointmentPatientId = patientId  # Appointment for the logged-in patient
+
+                cursor.execute(
+                  "INSERT INTO appointments_table (patientId, relationId, date, hospitalName, department) VALUES (%s, %s, %s, %s, %s)",
+                  (patientId, appointmentPatientId, visitDate, hospitalName, department)
+                  )
+                conn.commit()
+            else:
+                cursor.execute(
+                  "INSERT INTO appointments_table (patientId, relationId, date, hospitalName, department) VALUES (%s, %s, %s, %s, %s)",
+                  (patientId, selectedRelativeId, visitDate, hospitalName, department)
+                  )
+                conn.commit()
+
+            # Insert into appointments_table
+            
+
+            return redirect(url_for('patient_dashboard_appointments'))
+
+
+        if request.method == "GET":
+            # Fetch patient details for the logged-in user
+            cursor.execute("SELECT fullName, dob, bloodGroup, email, phone FROM patients_master_table WHERE patientId=%s", (patientId,))
+            patient = cursor.fetchone()
+
+            # Fetch the logged-in patient's relatives
+            cursor.execute("""
+                SELECT pr.relationId, pr.relationship, pr.fullName, pr.dob, pr.bloodGroup
+                FROM patients_relatives_table pr
+                JOIN patients_master_table p ON pr.relativePatientId = p.patientId
+                WHERE pr.patientId = %s
+            """, (patientId,))
+            relatives = cursor.fetchall()
+            relatives_list = []
+            for relative in relatives:
+                relative_data = {
+                    'relationId': relative['relationId'],
+                    'relationship': relative['relationship'],
+                    'fullName': relative['fullName'],
+                    'dob': relative['dob'],
+                    'bloodGroup': relative['bloodGroup']
+                }
+                relatives_list.append(relative_data)
+            # Fetch hospital list and department details
+            cursor.execute("SELECT name, attributes FROM hospitals_master_table")
+            hospitals = cursor.fetchall()
+            hospital_list = []
+            for hospital in hospitals:
+                hospital_data = {"name": hospital['name']}
+                attributes = hospital.get('attributes')
+                if attributes is not None:
+                    attributes_dict = json.loads(attributes)
+                    hospital_data["departments"] = attributes_dict.get("departments", [])
+                else:
+                    hospital_data["departments"] = []
+                hospital_list.append(hospital_data)
+
+            return render_template('patient_new_appointment.html', patient=patient, relatives=relatives_list, hospitals=hospital_list)
+    else:
+        return redirect(url_for('patient_login'))
+
+
+@app.route('/get_relative_details', methods=['GET'])
+def get_relative_details(relative_id):
+    if session.get('user_type') != 'patient':
+    
+      # Fetch relative details from the database
+      cur = conn.cursor()
+      query = '''
+      SELECT fullName, dob, bloodGroup
+      FROM patients_relatives_table
+      WHERE patientId = %s;
+      '''
+      cur.execute(query, (relative_id,))
+      relative_details = cur.fetchall()
+
+      if relative_details:
+          return jsonify({
+              'relationId': relative_details['relationId'],
+              'fullName': relative_details['fullName'],
+              'dob': str(relative_details['dob']),
+              'phone': relative_details['phone'],
+              'bloodGroup': relative_details['bloodGroup']
+          })
+      else:
+          return jsonify({'error': 'Relative not found'}), 404
+    else:
+      return redirect(url_for('patient_login'))
 
 @app.route("/patient_dashboard/appointments")
 def patient_dashboard_appointments():
   if session.get('user_type') == 'patient':
     patientId = session.get('patient_id')
-    return render_template('patient_dashboard_appointments.html')
+    appointments = get_appointment_data(patientId)
+    conn = db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT fullName, dob, email, bloodGroup, address, phone FROM patients_master_table WHERE patientId = %s", (patientId, ))
+    patientData = cursor.fetchone()
+
+    return render_template('patient_dashboard_appointments.html', patientData=patientData, appointments=appointments)
   else:
     return redirect(url_for('patient_login'))
+
 
 
 @app.route("/patient_dashboard/reports")
