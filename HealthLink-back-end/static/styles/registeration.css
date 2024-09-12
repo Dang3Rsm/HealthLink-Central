@@ -9,34 +9,11 @@
     position: relative;
 }
 
-.formGroup {
-    display: flex;
-    width: 100%;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.formGroup label {
-    flex: 1;
-    margin-right: 10px;
-}
-
-.form {
-    width: 100%;
+.block-content{
     display: flex;
     justify-content: center;
-}
-
-#patientRegisterForm,#hospitalRegisterForm,#doctorRegisterForm {
-    padding: 20px;
-    width: 50%;
-    background-color: rgba(217, 217, 217, 0.134);
-    border: 1px solid rgba(140, 140, 140, 0.258);
-    border-radius: 10px;
-}
-
-#patientRegisterForm label {
-    font-size: larger;
+    align-items: center;
+    flex-direction: column;
 }
 
 hr {
@@ -66,62 +43,4 @@ button:hover {
     transition-duration: 0.2s;
     transition-timing-function: ease;
     transition-delay: 0s;
-}
-
-input,
-select {
-    height: 40px;
-    width: 60%;
-  border: 1px solid #c7c7c7;
-}
-
-textarea {
-    height: 80px;
-    width: 60%;
-  border: 1px solid #c7c7c7;
-
-}
-
-.small_container {
-    display: flex;
-    margin: 5px;
-    align-items: center;
-  justify-content: space-around;
-    flex-wrap: wrap;
-}
-.small_container input {
-    margin-left: auto; /* Align input fields to the right */
-}
-
-.bottom_buttons {
-    display: flex;
-    justify-content: space-between;
-}
-
-.error-message {
-    color: red;
-}
-
-.submitButton {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-}
-
-.submit-btn {
-    background-color: white;
-    font-weight: 400;
-    color: black;
-    font-size: large;
-    border: 1px solid rgb(0, 65, 0);
-    transition: ease;
-    transition-duration: 100ms;
-}
-
-.submit-btn:hover {
-    background-color: green;
-    cursor: pointer;
-    color: white;
-    transition: ease;
-    transition-duration: 100ms;
 }

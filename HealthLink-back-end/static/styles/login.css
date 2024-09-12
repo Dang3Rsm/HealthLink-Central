@@ -1,23 +1,18 @@
-/* login.css */
-
-/* Style the container */
 .container {
     width: 300px;
-    margin: 0 auto; /* Horizontally center the container */
-    margin-top: 100px; /* Adjust the top margin for vertical centering */
+    margin: 0 auto; 
+    margin-top: 100px;
     padding: 20px;
     border: 1px solid #ccc;
     border-radius: 5px;
     background-color: #f9f9f9;
   }
 
-  /* Style the heading */
   h1 {
     text-align: center;
     color: #333;
   }
 
-  /* Style the form elements */
   form {
     margin-top: 20px;
   }
@@ -34,8 +29,7 @@
     margin-bottom: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
-    box-sizing: border-box; /* Ensure padding and border are included in element's total width and height */
-  }
+    box-sizing: border-box; }
 
   input[type="submit"] {
     background-color: #4CAF50;

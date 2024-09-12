@@ -1,35 +1,64 @@
 {% extends "patient_dashboard_layout.html" %}
-<title>{{patient[1]}} New Appointment</title>
+<title>{{patient[0]}} New Appointment</title>
 
 
 {% block content %}
-
-<link rel="stylesheet" href="/static/styles/login.css">
-
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/all_forms.css') }}">
 <div class="form">
 
-  <form id="patientNewAptmtForm" onsubmit="return validateForm()" action='/new_appointment' method='POST'>
+  <form id="patientNewAptmtForm" class="formStyle" onsubmit="return validateForm()" action='/patient_dashboard/new_appointment' method='POST'>
 <h1 style="display:flex;justify-content: center;">New Appointment</h1>
+
+<div class="small_container">
+  <label for="selectRelative">Select Relative:</label><br>
+  <select id="selectRelative" name="selectRelative">
+    <option value="">Self</option>
+    {% for relative in relatives_list %}
+      <option value="{{ relative['relationId'] }}">{{ relative['relativeName'] }} ({{ relative['relationship'] }})</option>
+    {% endfor %}
+  </select>
+</div>
+<br><br>
 
     <div class="small_container">
       <label for="fullName">Full Name:</label><br>
-    <input type="text" id="fullName" name="fullName" required>
+    <input type="text" id="fullName" name="fullName" value="{{ patient.fullName }}" required>
     </div>
     <br><br>
     <div class="small_container">
       <label for="phone">Phone Number:</label><br>
-    <input type="tel" id="phone" name="phone" required>
+    <input type="tel" id="phone" name="phone" value="{{ patient.phone }}" required>
     </div>
     <br><br>
     <div class="small_container">
       <label for="email">E mail:</label><br>
-    <input type="email" id="email" name="email" required>
+    <input type="email" id="email" name="email" value="{{ patient.email }}" required='false'>
+    </div>
+    <br><br>
+    <div class="small_container">
+      <label for="dob">DOB:</label><br>
+    <input type="date" id="dob" name="dob" value="{{ patient.dob }}" required>
+    </div>
+    <br><br>
+    <div class="small_container">
+      <label for="bloodGroup">Blood Group</label><br>
+    <select id="bloodGroup" name="bloodGroup" required>
+      <option value="{{ patient.bloodGroup }}" selected>{{ patient.bloodGroup }}</option>
+      {% for group in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
+      {% if group!= patient.bloodGroup %}
+      <option value="{{ group }}">{{ group }}</option>
+      {% endif %}
+      {% endfor %}
+    </select>
     </div>
     <br><br>
     <div class="small_container">
       <label for="hospital">Select Hospital:</label><br>
       <select id="hospital" name="hospital" required>
-          
+        <option value="Select">Select</option>
+        {% for hospital in hospitals %}
+        <option value="{{hospital.name}}">{{hospital.name}}</option>
+        {% endfor %}
       </select>
     </div>
     <br><br>
@@ -37,14 +66,136 @@
     <div class="small_container">
       <label for="department">Select Department:</label><br>
       <select id="department" name="department" required>
-       
+          <option value="Select">Select</option>
       </select>
+  </div>
+    <br><br>
+    <div class="small_container">
+      <label for="visitDate">Expected visit vate</label><br>
+    <input type="date" id="visitDate" name="visitDate" required>
     </div>
     <br><br>
-    <div class="submitButton">
-      <input class="submit-btn" type="submit" value="Register">
+    <div id="relativeCheckbox" class="small_container hidden">
+      <label for="patientRelative">Add this user to your relative list:</label><br>
+      <input type="checkbox" id="patientRelative" name="patientRelative">
+      <br><br>
     </div>
-  </form>
-</div>
+  <div id="relativeType" class="small_container hidden">
+      <label for="relativeTypeSelect">Relative Type:</label><br>
+      <select id="relativeTypeSelect" name="relativeType">
+          <option value="">Select Relative Type</option>
+          <option value="father">Father</option>
+          <option value="mother">Mother</option>
+          <option value="Son">Son</option>
+          <option value="Daughter">Daughter</option>
+          <option value="brother">Brother</option>
+          <option value="sister">Sister</option>
+          <option value="uncle">Uncle</option>
+          <option value="aunt">Aunt</option>
+      </select>
+  </div>
+  <br><br>
+  <div class="submitButton">
+      <input class="submit-btn" type="submit" value="Register">
+  </div>
+</form>
 
+<script>
+  const hospitalSelect = document.getElementById('hospital');
+  const departmentSelect = document.getElementById('department');
+
+  const hospitalData = {
+    {% for hospital in hospitals %}
+    "{{ hospital.name }}": {{ hospital.departments | tojson }},
+    {% endfor %}
+};
+// Function to update the department dropdown based on the selected hospital
+        hospitalSelect.addEventListener('change', function() {
+            const selectedHospital = hospitalSelect.value;
+
+            // Clear the department dropdown
+            departmentSelect.innerHTML = '<option value="Select">Select</option>';
+
+            // Check if a valid hospital is selected
+            if (selectedHospital in hospitalData) {
+                // Get the departments for the selected hospital
+                const departments = hospitalData[selectedHospital];
+
+                // Add each department as an option in the department dropdown
+                departments.forEach(function(department) {
+                    const option = document.createElement('option');
+                    option.value = department;
+                    option.textContent = department;
+                    departmentSelect.appendChild(option);
+                });
+            }
+        });
+  document.addEventListener('DOMContentLoaded', () => {
+      const selectRelativeDropdown = document.getElementById('selectRelative');
+      const fullNameField = document.getElementById('fullName');
+      const phoneField = document.getElementById('phone');
+      const dobField = document.getElementById('dob');
+      const bloodGroupField = document.getElementById('bloodGroup');
+      const originalFullName = "{{ patient.fullName }}";
+      const originalDob = "{{ patient.dob }}";
+      const originalBloodGroup = "{{ patient.bloodGroup }}";
+      const checkboxContainer = document.getElementById('relativeCheckbox');
+      const relativeTypeContainer = document.getElementById('relativeType');
+      const patientRelativeCheckbox = document.getElementById('patientRelative');
+
+      function updateCheckboxVisibility() {
+          const fullNameChanged = fullNameField.value !== originalFullName;
+          const dobChanged = dobField.value !== originalDob;
+          const bloodGroupChanged = bloodGroupField.value !== originalBloodGroup;
+
+          if (fullNameChanged || dobChanged || bloodGroupChanged) {
+              checkboxContainer.classList.remove('hidden');
+          } else {
+              checkboxContainer.classList.add('hidden');
+              relativeTypeContainer.classList.add('hidden'); // Hide relative type field when checkbox is not shown
+              patientRelativeCheckbox.checked = false; // Uncheck checkbox when hiding
+          }
+      }
+
+      function updateRelativeTypeVisibility() {
+          if (patientRelativeCheckbox.checked) {
+              relativeTypeContainer.classList.remove('hidden');
+          } else {
+              relativeTypeContainer.classList.add('hidden');
+              relativeTypeSelect.value = ""; 
+          }
+      }
+
+      // Add event listeners to relevant fields
+      fullNameField.addEventListener('input', updateCheckboxVisibility);
+      dobField.addEventListener('change', updateCheckboxVisibility);
+      bloodGroupField.addEventListener('input', updateCheckboxVisibility);
+      patientRelativeCheckbox.addEventListener('change', updateRelativeTypeVisibility);
+
+      // Initialize visibility based on current form values
+      updateCheckboxVisibility();
+      updateRelativeTypeVisibility();
+
+      selectRelativeDropdown.addEventListener('change', async function() {
+        const relativeId = selectRelativeDropdown.value;
+        
+        // If a relative is selected, fetch their details
+        if (relativeId) {
+          try {
+            const response = await fetch(`/get_relative_details`);
+            const data = await response.json();
+            
+            // Populate the form fields with the relative's data
+            relationId = data.relationId;
+            fullNameField.value = data.fullName;
+            phoneField.value = data.phone;
+            dobField.value = data.dob;
+            bloodGroupField.value = data.bloodGroup;
+          } catch (error) {
+            console.error('Error fetching relative details:', error);
+          }
+        }
+      });
+  });
+</script>
 {% endblock %}
