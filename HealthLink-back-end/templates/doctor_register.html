@@ -38,11 +38,6 @@
     <label for="department">Department:</label><br>
     <select id="department" name="department" required>
       <option value="">Select</option>
-      {% for hospital in hospitals %}
-        {% for department in hospital.departments %}
-          <option value="{{ department }}">{{ department }}</option>
-        {% endfor %}
-      {% endfor %}
     </select><br><br>
     </div><br><br>
     
@@ -62,4 +57,36 @@
     </div>
   </form>
 </div>
+
+<script>
+  const hospitalSelect = document.getElementById('hospital');
+  const departmentSelect = document.getElementById('department');
+
+  const hospitalData = {
+    {% for hospital in hospitals %}
+    "{{ hospital.name }}": {{ hospital.departments | tojson }},
+    {% endfor %}
+};
+// Function to update the department dropdown based on the selected hospital
+        hospitalSelect.addEventListener('change', function() {
+            const selectedHospital = hospitalSelect.value;
+
+            // Clear the department dropdown
+            departmentSelect.innerHTML = '<option value="Select">Select</option>';
+
+            // Check if a valid hospital is selected
+            if (selectedHospital in hospitalData) {
+                // Get the departments for the selected hospital
+                const departments = hospitalData[selectedHospital];
+
+                // Add each department as an option in the department dropdown
+                departments.forEach(function(department) {
+                    const option = document.createElement('option');
+                    option.value = department;
+                    option.textContent = department;
+                    departmentSelect.appendChild(option);
+                });
+            }
+        });
+</script>
 {% endblock content %}

@@ -1,0 +1,57 @@
+/* Basic styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: white;
+    padding: 0;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: white;
+}
+
+/* Navigation bar styles */
+.navbar {
+    background-color: white;
+    color: black;
+    padding: 10px 0;
+    border-bottom: 1px solid #a5a5a55d;
+}
+
+.navbar .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.patient-name {
+    font-weight: bold;
+}
+
+.nav-link {
+    color: black;
+    display: flex;
+    text-decoration: none;
+    margin-left: 20px;
+    min-width: 130px;
+    justify-content: center;
+    transition-property: all;
+    transition-duration: 0.2s;
+    transition-timing-function: ease;
+    transition-delay: 0s;
+    border: 1px solid rgba(108, 108, 108, 0.394);
+    padding: 10px;
+}
+
+
+.nav-link:hover {
+    background-color: black;
+    color: white;
+    transition-property: all;
+    transition-duration: 0.2s;
+    transition-timing-function: ease;
+    transition-delay: 0s;
+}

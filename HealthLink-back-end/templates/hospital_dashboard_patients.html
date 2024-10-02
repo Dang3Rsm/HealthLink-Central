@@ -1,0 +1,36 @@
+{% extends "hospital_dashboard_layout.html" %}
+{% block title %}Patients list{% endblock %}
+{% block content %}
+<link href="{{ url_for('static', filename='styles/hospitalpatientlist.css') }}" rel="stylesheet">
+    <div class="patient-tables">
+        <table class="patient-table">
+            <thead>
+                <tr>
+                    <th>Full Name</th>
+                    <th>Age</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for key, patient in unique_patients.items() %}
+                    <tr>
+                        <td>{{ patient.fullName }}</td>
+                        <td>{{ patient.age }}</td>
+                        <td>{{ patient.phone }}</td>
+                        <td>{{ patient.address }}</td>
+                        <td>
+                            <a href="#" class="card-link view-link">View</a> | 
+                            <a href="#" class="card-link delete-link">Delete</a>
+                        </td>
+                    </tr>
+                    
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    
+    {% endblock %}
+    
