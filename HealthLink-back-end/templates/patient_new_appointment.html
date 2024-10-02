@@ -8,13 +8,22 @@
 
   <form id="patientNewAptmtForm" class="formStyle" onsubmit="return validateForm()" action='/patient_dashboard/new_appointment' method='POST'>
 <h1 style="display:flex;justify-content: center;">New Appointment</h1>
-
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <ul>
+    {% for category, message in messages %}
+      <li class="{{ category }}">{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
 <div class="small_container">
   <label for="selectRelative">Select Relative:</label><br>
-  <select id="selectRelative" name="selectRelative">
+  <select id="selectRelative" name="selectRelative" default="">
     <option value="">Self</option>
-    {% for relative in relatives_list %}
-      <option value="{{ relative['relationId'] }}">{{ relative['relativeName'] }} ({{ relative['relationship'] }})</option>
+    <option value="new" name="patientRelative" id="patientRelative">New</option>
+    {% for relative in relatives %}
+      <option value="{{ relative['relationId'] }}">{{ relative['fullName'] }} ({{ relative['relationship'] }})</option>
     {% endfor %}
   </select>
 </div>
@@ -32,7 +41,7 @@
     <br><br>
     <div class="small_container">
       <label for="email">E mail:</label><br>
-    <input type="email" id="email" name="email" value="{{ patient.email }}" required='false'>
+    <input type="email" id="email" name="email" value="{{ patient.email }}" required>
     </div>
     <br><br>
     <div class="small_container">
@@ -136,29 +145,23 @@
       const phoneField = document.getElementById('phone');
       const dobField = document.getElementById('dob');
       const bloodGroupField = document.getElementById('bloodGroup');
+      const emailField = document.getElementById('email')
+      
       const originalFullName = "{{ patient.fullName }}";
       const originalDob = "{{ patient.dob }}";
       const originalBloodGroup = "{{ patient.bloodGroup }}";
-      const checkboxContainer = document.getElementById('relativeCheckbox');
+      const originalPhone = "{{ patient.phone }}"
       const relativeTypeContainer = document.getElementById('relativeType');
-      const patientRelativeCheckbox = document.getElementById('patientRelative');
-
-      function updateCheckboxVisibility() {
-          const fullNameChanged = fullNameField.value !== originalFullName;
-          const dobChanged = dobField.value !== originalDob;
-          const bloodGroupChanged = bloodGroupField.value !== originalBloodGroup;
-
-          if (fullNameChanged || dobChanged || bloodGroupChanged) {
-              checkboxContainer.classList.remove('hidden');
-          } else {
-              checkboxContainer.classList.add('hidden');
-              relativeTypeContainer.classList.add('hidden'); // Hide relative type field when checkbox is not shown
-              patientRelativeCheckbox.checked = false; // Uncheck checkbox when hiding
-          }
-      }
-
+      
+      
+      emailField.disabled = true;
+      phoneField.disabled = true;
+      fullNameField.disabled = true;
+      dobField.disabled = true;
+      bloodGroupField.disabled = true;
+  
       function updateRelativeTypeVisibility() {
-          if (patientRelativeCheckbox.checked) {
+          if (selectRelativeDropdown.value === "new") {
               relativeTypeContainer.classList.remove('hidden');
           } else {
               relativeTypeContainer.classList.add('hidden');
@@ -166,34 +169,61 @@
           }
       }
 
-      // Add event listeners to relevant fields
-      fullNameField.addEventListener('input', updateCheckboxVisibility);
-      dobField.addEventListener('change', updateCheckboxVisibility);
-      bloodGroupField.addEventListener('input', updateCheckboxVisibility);
-      patientRelativeCheckbox.addEventListener('change', updateRelativeTypeVisibility);
-
       // Initialize visibility based on current form values
-      updateCheckboxVisibility();
       updateRelativeTypeVisibility();
 
+      const relativeData = {
+        {% for relative in relatives %}
+          "{{ relative['relationId'] }}": {
+            "fullName": "{{ relative['fullName'] }}",
+            "dob": "{{ relative['dob'] }}",
+            "bloodGroup": "{{ relative['bloodGroup'] }}"
+          },
+        {% endfor %}
+      };
       selectRelativeDropdown.addEventListener('change', async function() {
         const relativeId = selectRelativeDropdown.value;
-        
-        // If a relative is selected, fetch their details
-        if (relativeId) {
-          try {
-            const response = await fetch(`/get_relative_details`);
-            const data = await response.json();
-            
-            // Populate the form fields with the relative's data
-            relationId = data.relationId;
-            fullNameField.value = data.fullName;
-            phoneField.value = data.phone;
-            dobField.value = data.dob;
-            bloodGroupField.value = data.bloodGroup;
-          } catch (error) {
-            console.error('Error fetching relative details:', error);
+        const isSelfSelected = selectRelativeDropdown.value === "";
+        if (isSelfSelected) {
+          emailField.disabled = true;
+          phoneField.disabled = true;
+          fullNameField.disabled = true;
+          dobField.disabled = true;
+          bloodGroupField.disabled = true;
+
+          fullNameField.value = originalFullName;
+          phoneField.value = originalPhone;
+          dobField.value = originalDob;
+          bloodGroupField.value = originalBloodGroup;
+          updateRelativeTypeVisibility();
+      } else if (relativeId === "new"){
+        fullNameField.disabled = false;
+        dobField.disabled = false;
+        bloodGroupField.disabled = false;
+
+        fullNameField.value = "";
+        dobField.value = "";
+        bloodGroupField.value = "";
+        phoneField.value = "{{ patient.phone }}"
+        emailField.value = "{{ patient.email }}"
+        updateRelativeTypeVisibility();
+      } 
+      else {
+          emailField.disabled = true;
+          phoneField.disabled = true;
+          fullNameField.disabled = true;
+          dobField.disabled = true;
+          bloodGroupField.disabled = true;
+
+          const selectedRelative = relativeData[relativeId];
+          if (selectedRelative) {
+            fullNameField.value = selectedRelative.fullName;
+            dobField.value = selectedRelative.dob;
+            bloodGroupField.value = selectedRelative.bloodGroup;
+            phoneField.value = "{{ patient.phone }}"
+            emailField.value = "{{ patient.email }}"
           }
+          updateRelativeTypeVisibility();
         }
       });
   });

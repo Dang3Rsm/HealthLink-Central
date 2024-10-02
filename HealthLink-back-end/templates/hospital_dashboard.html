@@ -1,15 +1,179 @@
 {% extends "hospital_dashboard_layout.html" %}
 {% block content %}
-    <section>
-        <h2>Appointments Today</h2>
-        <p>No appointments scheduled for today.</p>
-    </section>
-    <section>
-        <h2>Patients</h2>
-        <p>No patients available.</p>
-    </section>
-    <section>
-        <h2>Pharma</h2>
-        <p>No prescriptions issued.</p>
-    </section>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/hospitaldash.css') }}">
+    
+<div class="containers">
+    <h2>Hospital Details</h2>
+    <form method="POST" action="{{ url_for('hospital_dashboard') }}">
+        <div class="form-group">
+            <label for="name">Hospital Name</label>
+            <input type="text" id="name" name="name" class="form-control editable" value="{{ hospital.name }}" readonly required>
+        </div>
+
+        <div class="form-group">
+            <label for="address">Address</label>
+            <input type="text" id="address" name="address" class="form-control editable" value="{{ hospital.address }}" readonly required>
+        </div>
+
+        <div class="form-group">
+            <label for="contact">Contact Person</label>
+            <input type="text" id="contact" name="contact" class="form-control editable" value="{{ hospital.contactPerson }}" readonly required>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" class="form-control editable" value="{{ hospital.email }}" readonly required>
+        </div>
+        <div class="form-group">
+            <label for="numberOfBeds">Number of Beds</label>
+            <input type="int" id="numberOfBeds" name="numberOfBeds" class="form-control editable" value="{{ hospital.numberOfBeds }}" readonly required>
+        </div>
+        <div class="form-group">
+            <label for="medicalStaff">Medical Staff</label>
+            <input type="int" id="medicalStaff" name="medicalStaff" class="form-control editable" value="{{ hospital.medicalStaff }}" readonly required>
+        </div>
+        <div class="form-group">
+            <label for="nonMedicalStaff">Non Medical Staff</label>
+            <input type="int" id="nonMedicalStaff" name="nonMedicalStaff" class="form-control editable" value="{{ hospital.nonMedicalStaff }}" readonly required>
+        </div>
+        <div class="form-group">
+            <label>Weekdays:</label>
+            <div class="tags" id="weekdays">
+                {% set days_of_week = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                {% for day in days_of_week %}
+                    
+                    <span class="tag {% if day in attributes['weekdays'] %}selected{% endif %}" 
+                          data-value="{{ day }}">{{ day }}</span>
+                {% endfor %}
+            </div>
+
+            <input type="hidden" name="selectedWeekdays" id="selectedWeekdays" readonly required>
+        </div>
+        <div class="form-group">
+            <label for="specialities">Specialities (comma-separated)</label>
+            <input type="text" id="specialities" name="specialities" class="form-control editable" value="{{ attributes['departments'] | join(', ') }}" readonly required>
+            <input type="hidden" name="selectedSpecialities" id="selectedSpecialities" value="{{ attributes['departments'] | join(', ') }}" readonly required>
+            <div id="specialities-tags" class="tags-container">
+                {% for speciality in attributes['departments']%}
+                <span class="tag selected">{{speciality}}</span>
+                {% endfor %}
+            </div>
+        </div>
+        
+        
+        <input type="hidden" name="attributes" id="attributes" readonly required>
+
+        <div class="form-buttons">
+            <button type="button" id="edit-btn" class="btn btn-secondary" onclick="enableEditing()">Edit</button>
+            <button type="submit" id="save-btn" class="btn btn-primary">Save</button>
+            <button type="button" id="cancel-btn" class="btn btn-danger" onclick="cancelEditing()">Cancel</button>
+        </div>
+    </form>
+</div>
+<script>
+    let originalValues = {};
+    let editingEnabled = false;
+
+    // Function to enable editing
+    function enableEditing() {
+        editingEnabled = true;
+        document.querySelectorAll(".editable").forEach(function(input) {
+            input.removeAttribute('readonly');
+            input.classList.add('editing');
+            originalValues[input.id] = input.value; // Store original value
+        });
+        document.getElementById("edit-btn").style.display = "none";
+        document.getElementById("save-btn").style.display = "inline";
+        document.getElementById("cancel-btn").style.display = "inline";
+    }
+
+    // Function to cancel editing and revert changes
+    function cancelEditing() {
+        editingEnabled = false;
+        document.querySelectorAll(".editable").forEach(function(input) {
+            input.value = originalValues[input.id]; // Revert to original value
+            input.setAttribute('readonly', true);
+            input.classList.remove('editing');
+        });
+        document.getElementById("edit-btn").style.display = "inline";
+        document.getElementById("save-btn").style.display = "none";
+        document.getElementById("cancel-btn").style.display = "none";
+    }
+
+    // Function to handle tags (for both weekdays and specialities)
+    function updateSelectedAttributes() {
+        const selectedDays = Array.from(document.querySelectorAll('#weekdays .tag.selected')).map(tag => tag.getAttribute('data-value'));
+        const selectedSpecialties = Array.from(document.querySelectorAll('#specialities-tags .tag.selected')).map(tag => tag.getAttribute('data-value'));
+    
+        const attributes = {
+            weekdays: selectedDays,
+            departments: selectedSpecialties
+        };
+    
+        document.getElementById('attributes').value = JSON.stringify(attributes);
+    }
+
+    // Function to create specialities tags dynamically
+    function createSpecialityTags() {
+        const specialitiesField = document.getElementById("specialities");
+        const tagsContainer = document.getElementById("specialities-tags");
+        tagsContainer.innerHTML = ''; // Clear existing tags
+        const specialitiesArray = specialitiesField.value.split(',').map(function(speciality) {
+            return speciality.trim();
+        });
+        specialitiesArray.forEach(function(speciality) {
+            if (speciality) {
+                const tag = document.createElement("span");
+                tag.className = "tag";
+                tag.classList.add("selected");
+                tag.innerText = speciality;
+                tag.setAttribute('data-value', speciality);
+                tagsContainer.appendChild(tag);
+            }
+        });
+        updateSelectedAttributes()
+    }
+
+    // Handle input events for specialities
+    document.getElementById("specialities").addEventListener("input", createSpecialityTags);
+
+    // Ensure tags are correctly selected when submitted
+    document.querySelector("form").addEventListener("submit", function(event) {
+        updateSelectedAttributes(); // Ensure attributes are updated before form submission
+    });
+
+    // Click event handler to toggle selection for weekdays
+    document.querySelectorAll('#weekdays .tag').forEach(tag => {
+        tag.addEventListener('click', function() {
+            if (editingEnabled){
+                this.classList.toggle('selected');
+            }
+            updateSelectedAttributes();
+        });
+    });
+
+    // Load existing values and set initial selected state
+    document.addEventListener('DOMContentLoaded', function() {
+        const attributesField = document.getElementById('attributes').value;
+        if (attributesField) {
+            const hospitalAttributes = JSON.parse(attributesField);
+
+            // Set selected weekdays
+            hospitalAttributes.weekdays.forEach(day => {
+                const tag = document.querySelector(`#weekdays .tag[data-value="${day}"]`);
+                if (tag) {
+                    tag.classList.add('selected');
+                }
+            });
+
+            // Set specialities tags
+            hospitalAttributes.departments.forEach(speciality => {
+                const tag = document.createElement("span");
+                tag.classList.add('tag selected')
+                tag.innerText = speciality;
+                document.getElementById("specialities-tags").appendChild(tag);
+            });
+        }
+    });
+</script>
 {% endblock content %}

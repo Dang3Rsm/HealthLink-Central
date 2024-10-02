@@ -1,21 +1,5 @@
 {% extends "patient_dashboard_layout.html" %}
 {% block content %}
-    <!-- <section>
-        <h2>My Appointments</h2>
-      <ul>
-          {% for a in aptmts %}
-              <li>
-                AppointmentID: {{ a.aID }}<br>
-                Date: {{ a.date }} <br>
-                Time: {{ a.time }} <br>
-                Hospital: {{ a.hospital }} <br>
-                Department: {{ a.department }} <br>
-                Doctor: {{ a.doctor }} <br>
-                Status: {{ a.status }} <br>
-              </li>
-          {% endfor %}
-      </ul>
-    </section> -->
 
     <div id="appointment-list">
         {% for appointment in appointments.appointments %}

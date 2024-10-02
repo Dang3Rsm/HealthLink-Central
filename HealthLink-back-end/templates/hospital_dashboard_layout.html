@@ -3,14 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Patient Dashboard</title>
+    <link href="{{ url_for('static', filename='styles/dashboard.css') }}" rel="stylesheet">
+    <title> {% block title %}Hospital Dashboard{% endblock %}</title>
   </head>
 
   <body>
     <nav class="navbar">
       <div class="container">
-        <h1>{{hospitalName}}</h1>
+        <a href="/hospital_dashboard" style="text-decoration:none; color:black;"><h1>{{hospital.name}}</h1></a>
         <a href="/hospital_dashboard/patients" class="nav-link">Patients</a>
+        <a href="/hospital_dashboard/appointments" class="nav-link">Appointments</a>
         <a href="/hospital_dashboard/doctors" class="nav-link">Doctors</a>
         <a href="/hospital_dashboard/pharma" class="nav-link">Pharma</a>
         <a href="/hospital_dashboard/reports" class="nav-link">Reports</a>

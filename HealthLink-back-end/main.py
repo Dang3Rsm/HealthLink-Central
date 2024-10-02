@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify, render_template, session
 from flask import redirect, url_for
+from apscheduler.schedulers.background import BackgroundScheduler
 import json
 import bcrypt
 from dotenv import load_dotenv
 import os
+from datetime import datetime
 import pymysql
 
 app = Flask(__name__)
@@ -22,6 +24,55 @@ def check_password(password, hashed_password):
   except ValueError as e:
     print("Error checking password:", e)
     return False
+  
+# def start_scheduler():
+#     if not scheduler.running:
+#         scheduler.start()
+
+def calculate_age(dob):
+    today = datetime.today()
+    return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+
+def update_missed_appointments():
+    conn = db_connection()
+    cursor = conn.cursor()
+    print("Updating missed appointments...")
+    # Get the current datetime
+    current_datetime = datetime.now()
+
+    # Fetch all appointments that are "upcoming" and have passed the current date and time
+    query = """
+        SELECT appointmentId, appointmentDate, appointmentTime 
+        FROM appointments_table 
+        WHERE status = 'upcoming' AND appointmentDate < %s
+    """
+    cursor.execute(query, (current_datetime,))
+    missed_appointments = cursor.fetchall()
+
+    # Loop through and update the status to "missed"
+    for appointment in missed_appointments:
+        appointmentId = appointment['appointmentId']
+
+        # Update the status of missed appointments
+        update_query = """
+            UPDATE appointments_table
+            SET status = 'missed'
+            WHERE appointmentId = %s
+        """
+        cursor.execute(update_query, (appointmentId,))
+        conn.commit()  # Commit the update to the database
+
+    cursor.close()
+    conn.close()
+
+# Scheduler setup
+# scheduler = BackgroundScheduler()
+
+# # Schedule the task to run every day at midnight
+# scheduler.add_job(func=update_missed_appointments, trigger='cron', hour=0, minute=0)
+
+# # Start the scheduler
+# scheduler.start()
 
 ##### Database Connection
 def db_connection():
@@ -358,51 +409,40 @@ def patient_dashboard_new_appointment():
         if request.method == "POST":
             data = request.form
             selectedRelativeId = data.get("selectRelative")  # Get selected relative's ID if any
+            print(data)
 
-            # If the appointment is for a relative, set the relative as the patient
-            if selectedRelativeId != patientId:
-                relativeType = data.get("relativeType")
+            fullName = data.get('fullName')
+            bloodGroup = data.get('bloodGroup')
+            dob = data.get('dob')
+            hospital = data.get('hospital')
+            department = data.get('department')
+            visitDate = data.get('visitDate')
+
+            if selectedRelativeId and selectedRelativeId != 'self' and selectedRelativeId != 'new':
+              relativeId = selectedRelativeId
+
+            elif selectedRelativeId == 'new':
+              relationship = data.get('relativeType')
+              cursor.execute("INSERT INTO patients_relatives_table (patientId, relationship, fullName, bloodGroup, dob) VALUES (%s, %s, %s, %s, %s)", (patientId, relationship, fullName, bloodGroup, dob))
+              conn.commit()
+
+              cursor.execute("SELECT * FROM patients_relatives_table WHERE patientId=%s and fullName=%s", (patientId, fullName))
+              relative = cursor.fetchone()
+              relativeId = relative['relationId']
+
             else:
-                appointmentPatientId = patientId  # Appointment for the logged-in patient
-
-            # Collect form data
-            Patient_name = data["fullName"]
-            dob = data["dob"]
-            bloodGroup = data["bloodGroup"]
-            email = data["email"]
-            phone = data["phone"]
-            hospitalName = data["hospital"]
-            department = data["department"]
-            visitDate = data["visitDate"]
-            addRelative = data["patientRelative"]
-
-            if addRelative:
-                # Insert into patients_relatives_table
-                cursor.execute(
-                    "INSERT INTO patients_relatives_table (patientId, relationship, fullName, dob, bloodGroup) VALUES (%s, %s, %s, %s, %s)", (patientId, relativeType, Patient_name, dob, bloodGroup)
-                )
-                conn.commit()
-                cursor.execute("SELECT relationId FROM patients_relatives_table WHERE patientId=%s AND relationship=%s", (patientId, relativeType))
-                relationId = cursor.fetchone()
-                if relationId:
-                  appointmentPatientId = relationId['relationId']  # Appointment for the relative
-                else:
-                  appointmentPatientId = patientId  # Appointment for the logged-in patient
-
-                cursor.execute(
-                  "INSERT INTO appointments_table (patientId, relationId, date, hospitalName, department) VALUES (%s, %s, %s, %s, %s)",
-                  (patientId, appointmentPatientId, visitDate, hospitalName, department)
-                  )
-                conn.commit()
-            else:
-                cursor.execute(
-                  "INSERT INTO appointments_table (patientId, relationId, date, hospitalName, department) VALUES (%s, %s, %s, %s, %s)",
-                  (patientId, selectedRelativeId, visitDate, hospitalName, department)
-                  )
-                conn.commit()
-
-            # Insert into appointments_table
+              relativeId = NULL
             
+            cursor.execute(
+                """
+                INSERT INTO appointments_table 
+                (patientId, relationId, date, hospitalName, department) 
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (patientId, relativeId, visitDate, hospital, department)
+            )
+            conn.commit()
+
 
             return redirect(url_for('patient_dashboard_appointments'))
 
@@ -413,12 +453,7 @@ def patient_dashboard_new_appointment():
             patient = cursor.fetchone()
 
             # Fetch the logged-in patient's relatives
-            cursor.execute("""
-                SELECT pr.relationId, pr.relationship, pr.fullName, pr.dob, pr.bloodGroup
-                FROM patients_relatives_table pr
-                JOIN patients_master_table p ON pr.relativePatientId = p.patientId
-                WHERE pr.patientId = %s
-            """, (patientId,))
+            cursor.execute("SELECT * FROM patients_relatives_table WHERE patientId=%s", (patientId,))
             relatives = cursor.fetchall()
             relatives_list = []
             for relative in relatives:
@@ -485,7 +520,6 @@ def patient_dashboard_appointments():
     cursor = conn.cursor()
     cursor.execute("SELECT fullName, dob, email, bloodGroup, address, phone FROM patients_master_table WHERE patientId = %s", (patientId, ))
     patientData = cursor.fetchone()
-
     return render_template('patient_dashboard_appointments.html', patientData=patientData, appointments=appointments)
   else:
     return redirect(url_for('patient_login'))
@@ -521,43 +555,265 @@ def patient_dashboard_prescriptions():
 
 
 ######################## HOSPITAL DASHBOARD ##############
-@app.route("/hospital_dashboard")
+@app.route("/hospital_dashboard", methods=["GET", "POST"])
 def hospital_dashboard():
   if session.get('user_type') == 'hospital':
-    hospitalId = session.get('hospital_id')
     conn = db_connection()
     cursor = conn.cursor()
+    
+    if request.method == "POST":
+
+      data = request.form
+      hospitalId = session.get('hospital_id')
+      hospitalName = data["name"]
+      hospitalAddress = data["address"]
+      hospitalContactPerson = data["contact"]
+      email = data["email"]
+      hospitalNumberOfBeds = data["numberOfBeds"]
+      hospitalMedicalStaff = data["medicalStaff"]
+      hospitalNonMedicalStaff = data["nonMedicalStaff"]
+      hospitalEmail = data["email"]
+      attributes_json = data["attributes"]
+      attributes = json.loads(attributes_json)
+      weekdays = attributes.get('weekdays', [])
+      departments = attributes.get('departments', [])
+
+      
+      cursor.execute("UPDATE hospitals_master_table SET name=%s, address=%s, contactPerson=%s, numberOfBeds=%s, medicalStaff=%s, nonMedicalStaff=%s, email=%s, attributes=%s WHERE hospitalId=%s",(hospitalName, hospitalAddress, hospitalContactPerson, hospitalNumberOfBeds, hospitalMedicalStaff, hospitalNonMedicalStaff, email, json.dumps({"weekdays": weekdays, "departments": departments}), hospitalId))
+      conn.commit()
+      hospital = cursor.fetchone()
+      return redirect(url_for('hospital_dashboard', hospital=hospital))
+
+    hospitalId = session.get('hospital_id')
+    
     cursor.execute("SELECT * FROM hospitals_master_table WHERE hospitalId = %s",(hospitalId, ))
     hospital = cursor.fetchone()
-    hospital_name = hospital['name']
-    return render_template('hospital_dashboard.html',hospitalName=hospital_name)
+    attributes = json.loads(hospital['attributes'])
+
+    return render_template('hospital_dashboard.html',hospital=hospital, attributes=attributes)
   return redirect(url_for('hospital_login'))
 
 @app.route("/hospital_dashboard/appointments")
 def hospital_dashboard_appointments():
   if session.get('user_type') == 'hospital':
-    patientId = session.get('hospital_id')
-    return render_template('hospital_dashboard_appointments.html')
+    hospitalId = session.get('hospital_id')
+    conn = db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT name FROM hospitals_master_table WHERE hospitalId = %s",(hospitalId, ))
+    hospital = cursor.fetchone()
+
+    cursor.execute("SELECT * FROM appointments_table WHERE hospitalName = %s AND date=%s",(hospital['name'], datetime.now().date()))
+    appointments_today = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM appointments_table WHERE hospitalName = %s",(hospital['name'], ))
+    appointments = cursor.fetchall()
+
+    for appointment in appointments:
+      relationId = appointment['relationId']
+      patientId = appointment['patientId']  
+
+      fullName, dob, phone = None, None, None
+      if relationId:  # If relation_id exists, fetch from patients_relatives_table
+          query = """
+              SELECT fullName, dob 
+              FROM patients_relatives_table
+              WHERE relationId = %s 
+            """
+          cursor.execute(query, (relationId,))
+          patient_data = cursor.fetchall()
+
+          if patient_data:
+              fullName = patient_data[0]['fullName']
+              dob = patient_data[0]['dob']
+          
+          query = """
+              SELECT phone
+              FROM patients_master_table
+              WHERE patientId = %s
+            """
+          cursor.execute(query, (patientId,))
+          phone_data = cursor.fetchone()
+          if phone_data:
+              phonea = phone_data['phone']
+
+      else:  # If no relation_id, fetch from patient_master_table using patient_id
+          query = """
+              SELECT fullName, dob, phone
+              FROM patients_master_table
+              WHERE patientId = %s
+            """
+          cursor.execute(query, (patientId,))
+          patient_data = cursor.fetchall()
+
+          if patient_data:
+              fullName = patient_data[0]['fullName']
+              dob = patient_data[0]['dob']
+              phone = patient_data[0]['phone']
+
+
+        # Fetch the result for the current iteration
+      appointment['fullName'] = fullName if fullName else "N/A"
+      appointment['age'] = calculate_age(dob) if dob else "N/A"
+      appointment['phone'] = phonea if phonea else "N/A"
+      
+
+    for appointment in appointments_today:
+      relationId = appointment['relationId']
+      patientId = appointment['patientId']  
+
+      fullName, dob, phone = None, None, None
+      if relationId:  # If relation_id exists, fetch from patients_relatives_table
+          query = """
+              SELECT fullName, dob 
+              FROM patients_relatives_table
+              WHERE relationId = %s 
+            """
+          cursor.execute(query, (relationId,))
+          patient_data = cursor.fetchall()
+
+          if patient_data:
+              fullName = patient_data[0]['fullName']
+              dob = patient_data[0]['dob']
+          
+          query = """
+              SELECT phone
+              FROM patients_master_table
+              WHERE patientId = %s
+            """
+          cursor.execute(query, (patientId,))
+          phone_data = cursor.fetchone()
+          if phone_data:
+              phonea = phone_data['phone']
+
+      else:  # If no relation_id, fetch from patient_master_table using patient_id
+          query = """
+              SELECT fullName, dob, phone
+              FROM patients_master_table
+              WHERE patientId = %s
+            """
+          cursor.execute(query, (patientId,))
+          patient_data = cursor.fetchall()
+
+          if patient_data:
+              fullName = patient_data[0]['fullName']
+              dob = patient_data[0]['dob']
+              phone = patient_data[0]['phone']
+
+        # Fetch the result for the current iteration
+      appointment['fullName'] = fullName if fullName else "N/A"
+      appointment['age'] = calculate_age(dob) if dob else "N/A"
+      appointment['phone'] = phonea if phonea else "N/A"
+    return render_template('hospital_dashboard_appointments.html', hospital=hospital, appointments=appointments, appointments_today=appointments_today)
   else:
     return redirect(url_for('hospital_login'))
 
 
 @app.route("/hospital_dashboard/patients")
 def hospital_dashboard_patients():
-  if session.get('user_type') == 'hospital':
-    patientId = session.get('hospital_id')
-    return render_template('hospital_dashboard_patients.html')
-  else:
-    return redirect(url_for('hospital_login'))
+    if session.get('user_type') == 'hospital':
+        hospitalId = session.get('hospital_id')
+        conn = db_connection()
+        cursor = conn.cursor()
 
+        # Fetch the hospital name from the database
+        cursor.execute("SELECT name FROM hospitals_master_table WHERE hospitalId = %s", (hospitalId,))
+        hospital = cursor.fetchone()
 
-@app.route("/hospital_dashboard/appointment_requests")
-def hospital_dashboard_appointment_requests():
-  if session.get('user_type') == 'hospital':
-    patientId = session.get('hospital_id')
-    return render_template('hospital_dashboard_appointment_requests.html')
-  else:
-    return redirect(url_for('hospital_login'))
+        # Fetch all appointments linked with the hospital name
+        cursor.execute("SELECT * FROM appointments_table WHERE hospitalName = %s", (hospital['name'],))
+        appointments = cursor.fetchall()
+
+        # Initialize a dictionary to store patient data that has already been fetched
+        fetched_patients = {}
+        unique_patients = {}  # Dictionary to track unique patients
+        duplicates = []  # List to store duplicates
+
+        # Loop through appointments to fetch patient details
+        for appointment in appointments:
+            relationId = appointment['relationId']
+            patientId = appointment['patientId']
+
+            # Check if the patient has already been fetched
+            if patientId not in fetched_patients:
+                fullName, dob, phone, address = None, None, None, None
+
+                if relationId:  # If relation_id exists, fetch from patients_relatives_table
+                    query = """
+                        SELECT fullName, dob
+                        FROM patients_relatives_table
+                        WHERE relationId = %s
+                    """
+                    cursor.execute(query, (relationId,))
+                    patient_data = cursor.fetchone()
+
+                    if patient_data:
+                        fullName = patient_data['fullName']
+                        dob = patient_data['dob']
+
+                    # Fetch phone and address from patient_master_table
+                    query = """
+                        SELECT phone, address
+                        FROM patients_master_table
+                        WHERE patientId = %s
+                    """
+                    cursor.execute(query, (patientId,))
+                    additional_data = cursor.fetchone()
+                    if additional_data:
+                        phone = additional_data['phone']
+                        address = additional_data['address']
+
+                else:  # If no relation_id, fetch directly from patient_master_table
+                    query = """
+                        SELECT fullName, dob, phone, address
+                        FROM patient_master_table
+                        WHERE patientId = %s
+                    """
+                    cursor.execute(query, (patientId,))
+                    patient_data = cursor.fetchone()
+
+                    if patient_data:
+                        fullName = patient_data['fullName']
+                        dob = patient_data['dob']
+                        phone = patient_data['phone']
+                        address = patient_data['address']
+
+                # Calculate age from dob
+                age = calculate_age(dob) if dob else "N/A"
+
+                # Create a unique key for the patient based on fullName, phone, and dob
+                key = (fullName, phone, dob)
+
+                # Check for duplicates
+                if key in unique_patients:
+                    duplicates.append({
+                        'fullName': fullName,
+                        'age': age,
+                        'dob' : dob,
+                        'phone': phone,
+                        'address': address,
+                    })
+                else:
+                    unique_patients[key] = {
+                        'patientId': patientId,
+                        'fullName': fullName if fullName else "N/A",
+                        'age': age,
+                        'dob' : dob,
+                        'phone': phone if phone else "N/A",
+                        'address': address if address else "N/A"
+                    }
+                    fetched_patients[patientId] = unique_patients[key]  # Store the unique patient
+
+            # Add the patient details from the dictionary to the appointment
+            appointment['fullName'] = unique_patients[key]['fullName']
+            appointment['age'] = unique_patients[key]['age']
+            appointment['dob'] = unique_patients[key]['dob']
+            appointment['phone'] = unique_patients[key]['phone']
+            appointment['address'] = unique_patients[key]['address']
+            print(appointment)
+        return render_template('hospital_dashboard_patients.html', hospital=hospital, patients=appointments, duplicates=duplicates, unique_patients=unique_patients)
+    else:
+        return redirect(url_for('hospital_login'))
 
 
 @app.route("/hospital_dashboard/reports_history")
@@ -593,6 +849,10 @@ def logout():
   session.pop('user_type', None)
   return redirect(url_for('index'))
 
+
+# @app.teardown_appcontext
+# def shutdown_scheduler(exception=None):
+#     scheduler.shutdown()
 
 if __name__ == "__main__":
   app.run(debug=True,host='0.0.0.0')
