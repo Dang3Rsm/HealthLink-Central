@@ -104,6 +104,12 @@ def get_appointment_data(id):
   pname = patient['fullName']
   cursor.execute("SELECT * FROM appointments_table WHERE patientId = %s", (id, ))
   appointments = cursor.fetchall()
+  # get doctor name from doctorId
+  for appointment in appointments:
+      doctorId = appointment['doctorId']
+      cursor.execute("SELECT fullName FROM doctors_master_table WHERE doctorId = %s", (doctorId, ))
+      doctor = cursor.fetchone()
+      appointment['doctorId'] = doctor
   appointment_list = []
   for appointment in appointments:
       appointment_data = {
@@ -112,7 +118,7 @@ def get_appointment_data(id):
           'time': appointment['time'],
           'hospitalName': appointment['hospitalName'],
           'department': appointment['department'],
-          'doctorName': appointment['doctorName'],
+          'doctorName': appointment['doctorId'],
           'status': appointment['status']
       }
       appointment_list.append(appointment_data)
@@ -328,31 +334,124 @@ def doctor_dashboard():
     cursor.execute("SELECT * FROM doctors_master_table WHERE doctorId = %s",(doctorId, ))
     doctor = cursor.fetchone()
     doctor_name = doctor['fullName']
-    return render_template('doctor_dashboard.html', doctorName=doctor_name)
+    cursor.execute("SELECT * FROM appointments_table WHERE doctorId = %s",(doctorId, ))
+    appointments = cursor.fetchall()
+    return render_template('doctor_dashboard.html', doctor=doctor, appointments=appointments)
   else:
     return redirect(url_for('doctor_login'))
 
 @app.route("/doctor_dashboard/appointments")
 def doctor_dashboard_appointments():
   if session.get('user_type') == 'doctor':
+    doctorId = session.get('doctor_id')
     conn = db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM appointments_table")
+
+    cursor.execute("SELECT fullName FROM doctors_master_table WHERE doctorId = %s",(doctorId, ))
+    doctor = cursor.fetchone()
+
+    cursor.execute("SELECT * FROM appointments_table WHERE doctorId = %s AND date=%s",(doctorId, datetime.now().date()))
+    appointments_today = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM appointments_table WHERE doctorId = %s",(doctorId, ))
     appointments = cursor.fetchall()
-    aptmts_list = []
-    for row in appointments:
-      a = {
-          "aId": row[0],
-          "pID": row[1],
-          "date": row[2],
-          "time": row[3],
-          "status": row[7],
-      }
-      cursor.execute("SELECT * FROM patients_master_table WHERE patientId = %s",(row[1], ))
-      patient = cursor.fetchone()
-      a['pName'] = patient[1]
-      aptmts_list.append(a)
-    return render_template('doctor_dashboard_appointments.html',aptmts=aptmts_list)
+
+    for appointment in appointments:
+      relationId = appointment['relationId']
+      patientId = appointment['patientId']  
+
+      fullName, dob, phone = None, None, None
+      if relationId:  # If relation_id exists, fetch from patients_relatives_table
+          query = """
+              SELECT fullName, dob 
+              FROM patients_relatives_table
+              WHERE relationId = %s 
+            """
+          cursor.execute(query, (relationId,))
+          patient_data = cursor.fetchall()
+
+          if patient_data:
+              fullName = patient_data[0]['fullName']
+              dob = patient_data[0]['dob']
+          
+          query = """
+              SELECT phone
+              FROM patients_master_table
+              WHERE patientId = %s
+            """
+          cursor.execute(query, (patientId,))
+          phone_data = cursor.fetchone()
+          if phone_data:
+              phonea = phone_data['phone']
+
+      else:  # If no relation_id, fetch from patient_master_table using patient_id
+          query = """
+              SELECT fullName, dob, phone
+              FROM patients_master_table
+              WHERE patientId = %s
+            """
+          cursor.execute(query, (patientId,))
+          patient_data = cursor.fetchall()
+
+          if patient_data:
+              fullName = patient_data[0]['fullName']
+              dob = patient_data[0]['dob']
+              phone = patient_data[0]['phone']
+
+
+        # Fetch the result for the current iteration
+      appointment['fullName'] = fullName if fullName else "N/A"
+      appointment['age'] = calculate_age(dob) if dob else "N/A"
+      appointment['phone'] = phonea if phonea else "N/A"
+      
+
+    for appointment in appointments_today:
+      relationId = appointment['relationId']
+      patientId = appointment['patientId']  
+
+      fullName, dob, phone = None, None, None
+      if relationId:  # If relation_id exists, fetch from patients_relatives_table
+          query = """
+              SELECT fullName, dob 
+              FROM patients_relatives_table
+              WHERE relationId = %s 
+            """
+          cursor.execute(query, (relationId,))
+          patient_data = cursor.fetchall()
+
+          if patient_data:
+              fullName = patient_data[0]['fullName']
+              dob = patient_data[0]['dob']
+          
+          query = """
+              SELECT phone
+              FROM patients_master_table
+              WHERE patientId = %s
+            """
+          cursor.execute(query, (patientId,))
+          phone_data = cursor.fetchone()
+          if phone_data:
+              phonea = phone_data['phone']
+
+      else:  # If no relation_id, fetch from patient_master_table using patient_id
+          query = """
+              SELECT fullName, dob, phone
+              FROM patients_master_table
+              WHERE patientId = %s
+            """
+          cursor.execute(query, (patientId,))
+          patient_data = cursor.fetchall()
+
+          if patient_data:
+              fullName = patient_data[0]['fullName']
+              dob = patient_data[0]['dob']
+              phone = patient_data[0]['phone']
+
+        # Fetch the result for the current iteration
+      appointment['fullName'] = fullName if fullName else "N/A"
+      appointment['age'] = calculate_age(dob) if dob else "N/A"
+      appointment['phone'] = phonea if phonea else "N/A"
+    return render_template('doctor_dashboard_appointments.html', doctor=doctor,appointments=appointments, appointments_today=appointments_today)
   else:
     return redirect(url_for('doctor_login'))
 
@@ -418,6 +517,20 @@ def patient_dashboard_new_appointment():
             department = data.get('department')
             visitDate = data.get('visitDate')
 
+            visit_date_formatted = visitDate
+            cursor.execute("""
+                SELECT COALESCE(MAX(tokenNumber), 0) AS lastToken 
+                FROM appointments_table 
+                WHERE hospitalName=%s AND date=%s
+            """, (hospital, visit_date_formatted))
+
+            result = cursor.fetchone()
+            if result and result['lastToken']:
+                tokenNumber = result['lastToken'] + 1
+            else:
+              tokenNumber = 1
+
+
             if selectedRelativeId and selectedRelativeId != 'self' and selectedRelativeId != 'new':
               relativeId = selectedRelativeId
 
@@ -436,10 +549,10 @@ def patient_dashboard_new_appointment():
             cursor.execute(
                 """
                 INSERT INTO appointments_table 
-                (patientId, relationId, date, hospitalName, department) 
-                VALUES (%s, %s, %s, %s, %s)
+                (patientId, relationId, date, hospitalName, department, tokenNumber) 
+                VALUES (%s, %s, %s, %s, %s, %s)
                 """,
-                (patientId, relativeId, visitDate, hospital, department)
+                (patientId, relativeId, visitDate, hospital, department, tokenNumber)
             )
             conn.commit()
 
@@ -612,7 +725,9 @@ def hospital_dashboard_appointments():
     for appointment in appointments:
       relationId = appointment['relationId']
       patientId = appointment['patientId']  
-
+      cursor.execute('select fullName from doctors_master_table where doctorId=%s', (appointment['doctorId'], ))
+      doctorName = cursor.fetchone()
+      appointment['doctorId'] = doctorName
       fullName, dob, phone = None, None, None
       if relationId:  # If relation_id exists, fetch from patients_relatives_table
           query = """

@@ -1,15 +1,44 @@
 {% extends "doctor_dashboard_layout.html" %}
 {% block content %}
-    <section>
-        <h2>Appointments Today</h2>
-        <p>No appointments scheduled for today.</p>
-    </section>
-    <section>
-        <h2>Patients</h2>
-        <p>No patients available.</p>
-    </section>
-    <section>
-        <h2>Prescriptions</h2>
-        <p>No prescriptions issued.</p>
-    </section>
+<section>
+    <h2>Appointments Today</h2>
+    <link href="{{ url_for('static', filename='styles/doctor_appointments_list.css') }}" rel="stylesheet">
+    
+    {% if appointments_today is not none %}       
+<div class="appointment-tables">
+    <table class="appointment-table">
+        <thead>
+            <tr>
+                <th>Full Name</th>
+                <th>Age</th>
+                <th>Phone</th>
+                <th>Department</th>
+                <th>Time</th>
+                <th>Doctor</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for appointment in appointments_today %}
+                <tr>
+                    <td>{{ appointment.fullName }}</td>
+                    <td>{{ appointment.age }}</td>
+                    <td>{{ appointment.phone }}</td>
+                    <td>{{ appointment.department }}</td>
+                    <td>{{ appointment.time }}</td>
+                    <td>Dr. {{ appointment.doctor }}</td>
+                    <td>
+                        <a href="#" class="card-link view-link">View</a> 
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p>No appointments today.</p>
+{% endif %}
+        
+</section>
+
 {% endblock content %}
