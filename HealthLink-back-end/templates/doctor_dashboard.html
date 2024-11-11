@@ -19,14 +19,15 @@
             </tr>
         </thead>
         <tbody>
-            {% for appointment in appointments_today %}
+            {% for appointment in appointments %}
+            
                 <tr>
                     <td>{{ appointment.fullName }}</td>
                     <td>{{ appointment.age }}</td>
                     <td>{{ appointment.phone }}</td>
                     <td>{{ appointment.department }}</td>
                     <td>{{ appointment.time }}</td>
-                    <td>Dr. {{ appointment.doctor }}</td>
+                    <td>Dr. {{ doctor['fullName'] }}</td>
                     <td>
                         <a href="#" class="card-link view-link">View</a> 
                     </td>

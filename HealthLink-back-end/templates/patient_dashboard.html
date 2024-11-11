@@ -5,7 +5,6 @@
     <!-- Prescription Details -->
     <div class="prescription-details">
         <h2>Your Basic Information</h2>
-        
         <ul class="patient_data_list">
             <li>Name: {{ patientData.fullName }}</li>
             <li>Date of Birth: {{ patientData.dob }}</li>
@@ -21,23 +20,99 @@
         <div class="appointment-card">
             <div class="dots-and-status">
                 <div class="dots-container">
-                    <div class="dot {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'visited' %}grey{% elif appointment.status == 'missed' %}red{% endif %}"></div>
-                    <div class="dot {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'visited' %}grey{% elif appointment.status == 'missed' %}red{% endif %}"></div>
-                    <div class="dot {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'visited' %}grey{% elif appointment.status == 'missed' %}red{% endif %}"></div>
+                    <div class="dot {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'completed' %}grey{% elif appointment.status == 'missed' %}red{% endif %}"></div>
+                    <div class="dot {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'completed' %}grey{% elif appointment.status == 'missed' %}red{% endif %}"></div>
+                    <div class="dot {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'completed' %}grey{% elif appointment.status == 'missed' %}red{% endif %}"></div>
                 </div>
-                <div class="status {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'visited' %}grey{% elif appointment.status == 'missed' %}red{% endif %}">{{ appointment.status|capitalize }}</div>
+                <div class="status {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'completed' %}grey{% elif appointment.status == 'missed' %}red{% endif %}">{{ appointment.status|capitalize }}</div>
             </div>
             <div class="appointment-details">
                 <h2>Appointment ID: {{ appointment.appointmentId }}</h2>
+                <p>Patient Name: {{ appointment.patientName }}</p>
                 <div class="date-time">
                     <p>Date: {{ appointment.date }}</p>
                     <p>Time: {{ appointment.time }}</p>
                 </div>
                 <p>Hospital: {{ appointment.hospitalName }}</p>
                 <p>Department: {{ appointment.department }}</p>
-                <p>Doctor: Dr.{{ appointment.doctorId }}</p>
+                <p>Doctor: Dr.{{ appointment.doctorName['fullName'] }}</p>
+                <!-- View Button to trigger modal -->
+                <button class="btn btn-primary" onclick="viewAppointment({{ appointment.appointmentId }})">View</button>
             </div>
         </div>
     {% endfor %}
 </div>
+
+<!-- Modal for viewing appointment details -->
+<div class="modal fade" id="appointmentModal" tabindex="-1" role="dialog" aria-labelledby="appointmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="appointmentModalLabel">Appointment Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeModal()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h3>Appointment Information</h3>
+                <p><strong>Appointment ID:</strong> <span id="appointmentId"></span></p>
+                <p><strong>Patient Name:</strong> <span id="appointmentPatientName"></span></p>
+                <p><strong>Blood Group:</strong> <span id="appointmentBloodGroup"></span></p>
+                <p><strong>Appointment Date:</strong> <span id="appointmentDate"></span></p>
+                <p><strong>Time:</strong> <span id="appointmentTime"></span></p>
+                <p><strong>Hospital:</strong> <span id="appointmentHospital"></span></p>
+                <p><strong>Token Number:</strong> <span id="appointmentTokenNumber"></span></p>
+                <p><strong>Department:</strong> <span id="appointmentDepartment"></span></p>
+                <p><strong>Doctor:</strong> <span id="doctorName"></span></p>
+                <p><strong>Diagnosis:</strong> <span id="appointmentDiagnosis"></span></p>
+                <p><strong>Medicines:</strong> <span id="appointmentMedicines"></span></p>
+                <p><strong>Recommendations:</strong> <span id="appointmentRecommendations"></span></p>
+            </div>
+        </div>
+    </div>
+    <div class="text-center mt-3">
+        <a id="downloadReportButton" class="btn btn-primary" href="#" target="_blank">
+            Download Report
+        </a>
+    </div>
+</div>
+
+<script>
+    function viewAppointment(appointmentId) {
+        fetch(`/get_appointment_details/${appointmentId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const appointment = data.appointment;
+                    // Populate modal with appointment data
+                    document.getElementById('appointmentId').textContent = appointment.appointmentId;
+                    document.getElementById('appointmentDate').textContent = appointment.date;
+                    document.getElementById('appointmentTime').textContent = appointment.time || 'N/A';
+                    document.getElementById('appointmentHospital').textContent = appointment.hospital;
+                    document.getElementById('doctorName').textContent = "Dr. " + appointment.doctor;
+                    document.getElementById('appointmentPatientName').textContent = appointment.patient.fullName;
+                    document.getElementById('appointmentBloodGroup').textContent = appointment.patient.bloodGroup || 'N/A';
+                    document.getElementById('appointmentDepartment').textContent = appointment.department;
+                    document.getElementById('appointmentTokenNumber').textContent = appointment.tokenNumber || 'N/A';
+                    document.getElementById('appointmentDiagnosis').textContent = appointment.diagnosis.diagnosis || 'N/A';
+                    document.getElementById('appointmentMedicines').textContent = appointment.diagnosis.medicines || 'N/A';
+                    document.getElementById('appointmentRecommendations').textContent = appointment.diagnosis.recommendations || 'N/A';
+
+                    // Show the modal
+                    $('#appointmentModal').modal('show');
+                } else {
+                    alert('Error fetching appointment details.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+            const downloadButton = document.getElementById("downloadReportButton");
+            downloadButton.href = `/download_report/${appointmentId}`;
+    }
+
+    function closeModal() {
+        $('#appointmentModal').modal('hide');
+    }
+</script>
 {% endblock %}

@@ -76,6 +76,7 @@ sql_query = '''CREATE TABLE IF NOT EXISTS doctors_master_table (
     fullName VARCHAR(255),
     regNo VARCHAR(255) UNIQUE,
     email VARCHAR(255) UNIQUE,
+    phone VARCHAR(15) UNIQUE NULL,
     hospital VARCHAR(255),
     department VARCHAR(255),
     passwordHash TEXT,
