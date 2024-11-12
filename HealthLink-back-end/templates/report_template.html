@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Appointment Report</title>
+</head>
+<body>
+    <h1>Appointment Report</h1>
+    <h3>Appointment Information</h3>
+    <p><strong>Appointment ID:</strong> {{ appointment.appointmentId }}</p>
+    <p><strong>Patient Name:</strong> {{ appointment.patient.fullName }}</p>
+    <p><strong>Blood Group:</strong> {{ appointment.patient.bloodGroup }}</p>
+    <p><strong>Appointment Date:</strong> {{ appointment.date }}</p>
+    <p><strong>Time:</strong> {{ appointment.diagnosis.time }}</p>
+    <p><strong>Hospital:</strong> {{ appointment.hospital }}</p>
+    <p><strong>Token Number:</strong> {{ appointment.tokenNumber }}</p>
+    <p><strong>Department:</strong> {{ appointment.department }}</p>
+    <p><strong>Doctor:</strong> {{ appointment.doctor }}</p>
+    <h3>Diagnosis</h3>
+    <p><strong>Diagnosis:</strong> {{ appointment.diagnosis.diagnosis }}</p>
+    <p><strong>Medicines:</strong> {{ appointment.diagnosis.medicines }}</p>
+    <p><strong>Recommendations:</strong> {{ appointment.diagnosis.recommendations }}</p>
+</body>
+</html>

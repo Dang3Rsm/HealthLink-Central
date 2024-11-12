@@ -1,40 +1,199 @@
 {% extends "doctor_dashboard_layout.html" %}
+
 {% block content %}
-    <section>
-        <h2>Appointments Today</h2>
-      <!-- <ul>
-          {% for a in aptmts %}
-              <li>
-                AppointmentID: {{ a.aID }}<br>
-                PatientID: {{ a.pID }}<br>
-                PatientName: {{ a.pname }} <br>
-                Date: {{ a.date }} <br>
-                Status: {{ a.status }} <br>
-              </li>
-          {% endfor %}
-      </ul> -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="{{ url_for('static', filename='styles/doctordash.css') }}" rel="stylesheet">
 
-      <div id="appointment-list">
-          {% for appointment in aptmts %}
-          <div class="appointment-card">
-              <div class="dots-and-status">
-                  <div class="dots-container">
-                      <div class="dot {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'visited' %}grey{% elif appointment.status == 'missed' %}red{% endif %}"></div>
-                      <div class="dot {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'visited' %}grey{% elif appointment.status == 'missed' %}red{% endif %}"></div>
-                      <div class="dot {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'visited' %}grey{% elif appointment.status == 'missed' %}red{% endif %}"></div>
-                  </div>
-                  <div class="status {% if appointment.status == 'upcoming' %}green{% elif appointment.status == 'visited' %}grey{% elif appointment.status == 'missed' %}red{% endif %}">{{ appointment.status|capitalize }}</div>
-              </div>
-              <div class="appointment-details">
-                  <h2>Appointment ID: {{ appointment.pId }}</h2>
-                  <p>Date: {{ appointment.date }}</p>
-                  <p>Time: {{ appointment.time }}</p>
-                  <p>Patient: {{ appointment.pName }}</p>
-              </div>
-              <button class="diagnose-btn" onclick="openDiagnosisPage('{{ appointment.appointmentId }}')">Diagnose</button>
-          </div>
-          {% endfor %}
-      </div>
+<section>
+    <h2>Appointments Today</h2>
+    <link href="{{ url_for('static', filename='styles/doctor_appointments_list.css') }}" rel="stylesheet">
+    
+    {% if appointments_today is not none %}       
+    <div class="appointment-tables">
+        <table class="appointment-table">
+            <thead>
+                <tr>
+                    <th>Full Name</th>
+                    <th>Age</th>
+                    <th>Phone</th>
+                    <th>Department</th>
+                    <th>Time</th>
+                    <th>Doctor</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appointment in appointments_today %}
+                <tr>
+                    <td>{{ appointment.fullName }}</td>
+                    <td>{{ appointment.age }}</td>
+                    <td>{{ appointment.phone }}</td>
+                    <td>{{ appointment.department }}</td>
+                    <td>{{ appointment.time }}</td>
+                    <td>Dr. {{ doctor['fullName'] }}</td>
+                    <td>
+                        <a href="#" class="card-link view-link" onclick="viewAppointment({{ appointment.appointmentId }})">View</a> 
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>No appointments today.</p>
+    {% endif %}
+</section>
 
-    </section>
-{% endblock content %}
+<div id="appointment-list">
+    <h2>All Appointments</h2>
+    <div class="appointment-tables">
+        <table class="appointment-table">
+            <thead>
+                <tr>
+                    <th>Full Name</th>
+                    <th>Age</th>
+                    <th>Phone</th>
+                    <th>Department</th>
+                    <th>Date</th>
+                    <th>Doctor</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appointment in appointments %}
+                <tr>
+                    <td>{{ appointment.fullName }}</td>
+                    <td>{{ appointment.age }}</td>
+                    <td>{{ appointment.phone }}</td>
+                    <td>{{ appointment.department }}</td>
+                    <td>{{ appointment.date }}</td>
+                    <td>Dr. {{ doctor['fullName'] }}</td>
+                    <td>
+                        <a href="#" class="card-link view-link" onclick="viewAppointment({{ appointment.appointmentId }})">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal for viewing and editing appointments -->
+    <div class="modal fade" id="appointmentModal" tabindex="-1" role="dialog" aria-labelledby="appointmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="appointmentModalLabel">Appointment Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Form for editing appointment -->
+                    <form id="appointmentForm">
+                        
+                        <div class="form-group">
+                            <label for="diagnosis">Diagnosis</label>
+                            <textarea class="form-control" id="diagnosis" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="recommendations">Recommendations</label>
+                            <textarea class="form-control" id="recommendations" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="medicines">Medicines</label>
+                            <textarea class="form-control" id="medicines" rows="3"></textarea>
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="saveChanges()">Save Changes</button>
+                        <button type="button" class="btn btn-danger" onclick="cancelChanges()">Cancel</button>
+                        <button type="button" class="btn btn-success" onclick="markComplete()">Mark Complete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    let currentAppointmentId = null; // Store the current appointment ID for further actions
+
+    // Function to open the appointment in a modal for editing
+    function viewAppointment(appointmentId) {
+        currentAppointmentId = appointmentId;
+        
+        // Fetch the appointment details via AJAX
+        fetch(`/get_appointment_details/${appointmentId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Fill the modal form with the appointment data
+                    document.getElementById('diagnosis').value = data.appointment.diagnosis.diagnosis || ''; // Set diagnosis
+                    document.getElementById('recommendations').value = data.appointment.diagnosis.recommendations || ''; // Set recommendations
+                    document.getElementById('medicines').value = data.appointment.diagnosis.medicines || ''; // Set medicines
+                    // Show the modal
+                    $('#appointmentModal').modal('show');
+                } else {
+                    alert("Error fetching appointment details.");
+                }
+            })
+            .catch(error => console.error("Error fetching appointment details:", error));
+    }
+    
+
+    // Function to save changes made to the appointment
+    function saveChanges() {
+        const diagnosis = document.getElementById('diagnosis').value;
+        const recommendations = document.getElementById('recommendations').value;
+        const medicines = document.getElementById('medicines').value;
+
+        if (!diagnosis.trim() && !recommendations.trim() && !medicines.trim()) {
+            alert("Please fill out at least one field.");
+            return;
+        }
+
+        // Send the updated information to the server via AJAX
+        fetch(`/update_diagnosis/${currentAppointmentId}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                diagnosis,
+                recommendations,
+                medicines
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Changes saved successfully.");
+                $('#appointmentModal').modal('hide'); // Close the modal
+            } else {
+                alert("Error saving changes.");
+            }
+        })
+        .catch(error => console.error("Error saving changes:", error));
+    }
+
+    // Function to cancel changes and close the modal
+    function cancelChanges() {
+        $('#appointmentModal').modal('hide'); // Simply close the modal
+    }
+
+    // Function to mark the appointment as complete
+    function markComplete() {
+        fetch(`/complete_appointment/${currentAppointmentId}`, {
+            method: "POST"
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Appointment marked as complete.");
+                $('#appointmentModal').modal('hide'); // Close the modal
+            } else {
+                alert("Error completing appointment.");
+            }
+        })
+        .catch(error => console.error("Error marking appointment as complete:", error));
+    }
+</script>
+
+{% endblock %}

@@ -76,6 +76,7 @@ sql_query = '''CREATE TABLE IF NOT EXISTS doctors_master_table (
     fullName VARCHAR(255),
     regNo VARCHAR(255) UNIQUE,
     email VARCHAR(255) UNIQUE,
+    phone VARCHAR(15) UNIQUE NULL,
     hospital VARCHAR(255),
     department VARCHAR(255),
     passwordHash TEXT,
@@ -111,9 +112,11 @@ sql_query = '''CREATE TABLE IF NOT EXISTS appointments_table (
     time TIME,
     hospitalName VARCHAR(255),
     department VARCHAR(255),
-    doctorName VARCHAR(255),
+    doctorId VARCHAR(255),
     status VARCHAR(100) default 'pending',
-    FOREIGN KEY (patientId) REFERENCES patients_master_table(patientId)
+    tokenNumber INT,
+    FOREIGN KEY (patientId) REFERENCES patients_master_table(patientId),
+    FOREIGN KEY (doctorId) REFERENCES doctors_master_table(doctorId)
 );'''
 cur.execute(sql_query)
 

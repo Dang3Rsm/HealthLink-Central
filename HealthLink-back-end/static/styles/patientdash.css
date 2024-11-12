@@ -55,13 +55,18 @@ body {
   transition-timing-function: ease;
   transition-delay: 0s;
 }
-
+#appointment-list {
+  display: grid;
+  grid-auto-columns: minmax();
+  gap: 20px; /* Space between cards */
+  justify-items: center;
+}
 /* Patient card styles */
 .appointment-card {
   background-color: white;
   border-radius: 5px;
   padding: 20px;
-  margin-bottom: 20px;
+  margin: 20px;
 }
 
 .appointment-card h2 {

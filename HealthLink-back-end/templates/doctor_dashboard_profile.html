@@ -1,0 +1,238 @@
+{% extends 'doctor_dashboard_layout.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header">
+            <h3>Doctor Profile</h3>
+        </div>
+        <div class="card-body">
+            <form id="doctor-profile-form">
+                <!-- Doctor Name -->
+                <div class="mb-3">
+                    <label for="doctor-name" class="form-label">Doctor Name</label>
+                    <input type="text" id="doctor-name" class="form-control" value="{{ doctor['fullName'] }}" readonly>
+                </div>
+
+                <!-- Email -->
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" id="email" class="form-control" value="{{ doctor['email'] }}" readonly>
+                </div>
+
+                <!-- Phone -->
+                <div class="mb-3">
+                    <label for="phone" class="form-label">Phone</label>
+                    <input type="phone" id="phone" class="form-control" value="{{ doctor['phone'] }}" readonly>
+                </div>
+
+                <!-- Hospital Name -->
+                <div class="mb-3 position-relative">
+                    <label for="hospital-name" class="form-label">Hospital Name</label>
+                    <input type="text" id="hospital-name" class="form-control" value="{{ doctor['hospital'] }}" readonly>
+                    <ul id="hospital-list" style="display: none; position: absolute; z-index: 1000; background-color: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; width: 100%;"></ul>
+                </div>
+
+                <!-- Department -->
+                <div class="mb-3">
+                    <label for="department" class="form-label">Department</label>
+                    <select id="department" class="form-select"  disabled>
+                        <option value="{{ doctor['department'] }}">{{ doctor['department'] }}</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Confirm Password</label>
+                    <input type="password" id="password" class="form-control" readonly>
+                </div>
+
+                <!-- Buttons -->
+                <div class="d-flex">
+                    <button type="button" id="edit-button" class="btn btn-primary me-2">Edit</button>
+                    <button type="button" id="save-button" class="btn btn-success me-2" style="display: none;">Save Changes</button>
+                    <button type="button" id="cancel-button" class="btn btn-danger" style="display: none;">Cancel Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const editButton = document.getElementById('edit-button');
+        const saveButton = document.getElementById('save-button');
+        const cancelButton = document.getElementById('cancel-button');
+
+        const doctorNameInput = document.getElementById('doctor-name');
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        const hospitalInput = document.getElementById('hospital-name');
+        const departmentSelect = document.getElementById('department');
+        const passwordInput = document.getElementById('password');
+        const hospitalList = document.getElementById('hospital-list');
+        const form = document.getElementById('doctor-profile-form');
+
+        let originalData = {
+            name: doctorNameInput.value,
+            email: emailInput.value,
+            phone: phoneInput.value,
+            hospital: hospitalInput.value,
+            department: departmentSelect.value,
+            password: ''
+        };
+
+        // Enable the form fields for editing
+        function enableEdit() {
+            doctorNameInput.removeAttribute('readonly');
+            emailInput.removeAttribute('readonly');
+            phoneInput.removeAttribute('readonly');
+            hospitalInput.removeAttribute('readonly');
+            passwordInput.removeAttribute('readonly');
+            departmentSelect.removeAttribute('disabled');
+
+            editButton.style.display = 'none';
+            saveButton.style.display = 'inline-block';
+            cancelButton.style.display = 'inline-block';
+        }
+
+        // Disable the form fields and revert to original data
+        function disableEdit() {
+            doctorNameInput.setAttribute('readonly', true);
+            emailInput.setAttribute('readonly', true);
+            phoneInput.setAttribute('readonly', true);
+            hospitalInput.setAttribute('readonly', true);
+            departmentSelect.setAttribute('disabled', true);
+            passwordInput.setAttribute('readonly', true);
+            passwordInput.value = '';
+
+            doctorNameInput.value = originalData.name;
+            emailInput.value = originalData.email;
+            phoneInput.value = originalData.phone;
+            hospitalInput.value = originalData.hospital;
+            departmentSelect.value = originalData.department;
+
+            editButton.style.display = 'inline-block';
+            saveButton.style.display = 'none';
+            cancelButton.style.display = 'none';
+        }
+
+        // Fetch hospitals from backend and show in the suggestions
+        function fetchHospitals(query) {
+            if (query.length < 3) {
+                hospitalList.style.display = 'none';
+                return;
+            }
+
+            fetch(`/search_hospitals?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    const hospitals = data.hospitals;
+                    if (hospitals.length > 0) {
+                        hospitalList.innerHTML = hospitals.map(hospital => 
+                            `<li class="list-group-item" data-id="${hospital.id}" data-name="${hospital.name}">${hospital.name}</li>`
+                        ).join('');
+                        hospitalList.style.display = 'block';
+                    } else {
+                        hospitalList.style.display = 'none';
+                    }
+                })
+                .catch(error => console.error('Error fetching hospitals:', error));
+        }
+
+        // Handle hospital name selection
+        hospitalInput.addEventListener('input', function () {
+            fetchHospitals(hospitalInput.value);
+        });
+
+        hospitalList.addEventListener('click', function (event) {
+            if (event.target.tagName.toLowerCase() === 'li') {
+                const selectedHospital = event.target;
+                hospitalInput.value = selectedHospital.getAttribute('data-name');
+                const hospitalId = selectedHospital.getAttribute('data-id');
+                fetchDepartments(hospitalId);
+                hospitalList.style.display = 'none';
+            }
+        });
+
+        // Fetch departments based on selected hospital
+        function fetchDepartments(hospitalId) {
+            const departmentSelect = document.getElementById('department'); // Get the department select element
+            const selectedDepartment = departmentSelect.value;
+            fetch(`/get_departments?hospital_id=${hospitalId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const departments = data.departments;
+                    departmentSelect.innerHTML = ''; // Clear any existing options
+                    departments.forEach(department => {
+                        const option = document.createElement('option');
+                        option.value = department;  // Set the department name as the value
+                        option.textContent = department;  // Set the department name as the display text
+                        departmentSelect.appendChild(option);  // Append the new option to the select element
+                    });
+                    
+                    if (departments.includes(selectedDepartment)) {
+                        departmentSelect.value = selectedDepartment;  // Set the previously selected department as the value
+                    }
+                    departmentSelect.removeAttribute('disabled');  // Enable the select dropdown once the options are populated
+                })
+                .catch(error => console.error('Error fetching departments:', error));
+        }
+        
+
+        // Save changes to the backend
+        saveButton.addEventListener('click', function () {
+            const updatedData = {
+                name: doctorNameInput.value,
+                email: emailInput.value,
+                phone: phoneInput.value,
+                hospital: hospitalInput.value,
+                department: departmentSelect.value,
+                password: passwordInput.value
+            };
+
+            fetch('/doctor_dashboard/profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        originalData = updatedData;
+                        disableEdit();
+                    } else {
+                        alert('Error saving changes');
+                    }
+                })
+                .catch(error => console.error('Error saving profile:', error));
+        });
+
+        // Cancel editing and revert to original data
+        cancelButton.addEventListener('click', function () {
+            disableEdit();
+        });
+
+        // Edit button click to enable editing
+        editButton.addEventListener('click', enableEdit);
+
+        // Initialize the form as non-editable
+        disableEdit();
+    });
+</script>
+
+<script>
+    document.querySelector("form").addEventListener("submit", function(event) {
+        const phoneInput = document.getElementById("phone");
+        const phone = phoneInput.value;
+
+        // Check if the phone number is a valid 10-digit number
+        if (phone && !/^\d{10}$/.test(phone)) {
+            alert("Phone number must be 10 digits.");
+            event.preventDefault(); // Prevent form submission
+        }
+    });
+</script>
+
+{% endblock %}
+

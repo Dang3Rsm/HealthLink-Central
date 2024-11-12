@@ -4,34 +4,46 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Doctor Dashboard</title>
-  <link rel="stylesheet" href="static/styles/doctordash.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link href="{{ url_for('static', filename='styles/doctordash.css') }}" rel="stylesheet">
 </head>
 <body>
   <nav class="navbar">
     <div class="container">
-      <span id="doctor-name" class="doctor-name"></span>
-      <a href="/doctor_dashboard/appointments" class="nav-link">Appointments</a>
-      <a href="/doctor_dashboard/reports" class="nav-link">Reports</a>
-      <a href="/logout" class="nav-link">Logout</a>
+      <div class="branding">
+        <span class="company-name">HealthLink Central</span>
+      </div>
+      <!-- Hamburger menu for mobile -->
+      <div class="hamburger-menu" onclick="toggleMenu()">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <!-- Navigation links -->
+      <div class="nav-links">
+        <a href="/doctor_dashboard/appointments" class="nav-link">Appointments</a>
+        <a href="/doctor_dashboard/reports" class="nav-link">Reports</a>
+        <a href="/doctor_dashboard/profile" class="nav-link">Profile</a>
+        <a href="/logout" class="nav-link">Logout</a>
+      </div>
     </div>
   </nav>
 
-  <div class="container">
-    <h1>My Appointments</h1>
-    <div id="appointment-list" class="appointment-list">
-    </div>
-  </div>
-
   <header>
-    <h1>Welcome, Dr. {{doctorName}}</h1>
+    <h1>Welcome, Dr. {{doctor['fullName']}}</h1>
   </header>
-  <!-- <nav>
-    <a href="/doctor_dashboard/appointments">Appointments</a>
-    <a href="/doctor_dashboard/patients">Patients</a>
-    <a href="/doctor_dashboard/reports">Reports</a>
-    <a href="/doctor_dashboard/prescriptions">Prescriptions</a>
-    <a href="/logout">Logout</a>
-  </nav> -->
-    {% block content %}{% endblock %}
+
+  {% block content %}{% endblock %}
+
+  <script>
+    // JavaScript function to toggle menu visibility
+    function toggleMenu() {
+      document.querySelector(".nav-links").classList.toggle("show");
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
